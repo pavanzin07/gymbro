@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d0f12">
+<title>MEU GYM BRO</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="mark">💪</div>
+    <div><h1>MEU GYM BRO</h1><small>TREINO · DIETA</small></div>
+  </div>
+  <div class="spacer"></div>
+  <button class="icon-btn" onclick="openMenu()" title="Opções">⚙️</button>
+</header>
+
+<main>
+  <!-- ===== PERFIL ===== -->
+  <section id="view-perfil" class="view active">
+    <div class="sec-head">
+      <div>
+        <h2>Seu perfil</h2>
+        <p id="perfil-sub">Conte sobre você pra começar</p>
+      </div>
+    </div>
+    <div id="perfil-body"></div>
+  </section>
+
+  <!-- ===== TREINOS ===== -->
+  <section id="view-treino" class="view">
+    <div class="sec-head">
+      <div>
+        <h2>Treinos</h2>
+        <p id="treino-sub">Monte suas rotinas</p>
+      </div>
+      <button class="btn btn-acc" onclick="openRoutine()">＋ Treino</button>
+    </div>
+    <div id="routines"></div>
+  </section>
+
+  <!-- ===== PROGRESSO ===== -->
+  <section id="view-progresso" class="view">
+    <div class="sec-head">
+      <div>
+        <h2>Progresso</h2>
+        <p id="prog-sub">Acompanhe sua evolução</p>
+      </div>
+    </div>
+    <div id="prog-body"></div>
+  </section>
+
+  <!-- ===== PERSONAGEM ===== -->
+  <section id="view-bro" class="view">
+    <div class="sec-head">
+      <div>
+        <h2>Seu Bro</h2>
+        <p id="bro-sub">Evolua treinando</p>
+      </div>
+    </div>
+    <div id="bro-body"></div>
+  </section>
+
+  <!-- ===== RECORDES ===== -->
+  <section id="view-recordes" class="view">
+    <div class="sec-head">
+      <div>
+        <h2>Conquistas</h2>
+        <p id="rec-sub">Metas, conquistas e recordes</p>
+      </div>
+    </div>
+    <div id="rec-body"></div>
+  </section>
+
+  <!-- ===== ALIMENTAÇÃO ===== -->
+  <section id="view-dieta" class="view">
+    <div class="sec-head">
+      <div>
+        <h2>Alimentação</h2>
+        <p id="dieta-sub">Planeje suas refeições</p>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="reviewDiet()">🔍 Revisão</button>
+        <button class="btn btn-ghost btn-sm" onclick="openTargets()">🎯 Metas</button>
+      </div>
+    </div>
+    <div id="macro-summary"></div>
+    <div id="meals"></div>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:4px" onclick="openMeal()">＋ Nova refeição</button>
+  </section>
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="tabbar">
+  <button class="tab active" id="tab-perfil" onclick="go('perfil')">
+    <span class="ic">🧬</span><span>Perfil</span>
+  </button>
+  <button class="tab" id="tab-treino" onclick="go('treino')">
+    <span class="ic">🏋️</span><span>Treino</span>
+  </button>
+  <button class="tab" id="tab-recordes" onclick="go('recordes')">
+    <span class="ic">🏆</span><span>Conquistas</span>
+  </button>
+  <button class="tab" id="tab-dieta" onclick="go('dieta')">
+    <span class="ic">🍽️</span><span>Dieta</span>
+  </button>
+  <button class="tab" id="tab-progresso" onclick="go('progresso')">
+    <span class="ic">📈</span><span>Progresso</span>
+  </button>
+  <button class="tab" id="tab-bro" onclick="go('bro')">
+    <span class="ic">🦾</span><span>Bro</span>
+  </button>
+</nav>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
