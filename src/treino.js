@@ -221,7 +221,13 @@ function playBeep(){
   }catch(e){}
 }
 function vibrate(){if(navigator.vibrate)navigator.vibrate(200);}
+let _restInt=null;
+export function stopRestTimer(){
+  if(_restInt){clearInterval(_restInt);_restInt=null;}
+  const el=document.getElementById('rest-timer-card');if(el)el.remove();
+}
 export function startRestTimer(secs=90){
+  stopRestTimer(); // evita card duplicado e interval fantasma (ex: botão +15s)
   const div=document.createElement('div');
   div.className='card';
   div.id='rest-timer-card';
@@ -232,20 +238,20 @@ export function startRestTimer(secs=90){
     div.innerHTML=`<div style="text-align:center;font-size:48px;font-weight:900;color:var(--acc);margin:10px 0">${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}</div>
       <p style="text-align:center;color:var(--mut);font-size:13px;margin:0 0 14px">Descanso</p>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost" onclick="document.getElementById('rest-timer-card')?.remove()" style="flex:1">Pronto</button>
+        <button class="btn btn-ghost" onclick="stopRestTimer()" style="flex:1">Pronto</button>
         <button class="btn btn-ghost" onclick="startRestTimer(${remaining}+15)" style="flex:1">+15s</button>
       </div>`;
   };
   update();document.body.appendChild(div);
-  const interval=setInterval(()=>{
+  _restInt=setInterval(()=>{
     remaining--;update();
     if(remaining<=0){
-      clearInterval(interval);
+      clearInterval(_restInt);_restInt=null;
       playBeep();vibrate();playBeep();
       setTimeout(()=>{
         div.innerHTML=`<div style="text-align:center"><div style="font-size:36px;margin:10px 0">✅ Pronto!</div>
           <p style="color:var(--mut);font-size:13px;margin:0 0 14px">Vamos lá mais uma série 💪</p>
-          <button class="btn btn-acc" onclick="document.getElementById('rest-timer-card')?.remove()" style="width:100%;justify-content:center">Continuar</button></div>`;
+          <button class="btn btn-acc" onclick="stopRestTimer()" style="width:100%;justify-content:center">Continuar</button></div>`;
       },200);
     }
   },1000);
