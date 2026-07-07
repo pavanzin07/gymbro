@@ -80,7 +80,25 @@ export function exerciseDetail(name){
       <div class="name"><b>${e.load} kg × ${e.reps||'–'}</b><span>${dShort(e.date)}${est?' · 1RM ~'+est+'kg':''}${isPR?' · 🏆':''}</span></div>
       <div class="row-actions"><button class="mini del" onclick="delExEntry('${escAttr(name)}','${e.date}',${e.load},${e.reps})">🗑</button></div>
     </div>`;}).join('')}
-    <div class="modal-actions"><button class="btn btn-acc" style="flex:1;justify-content:center" onclick="closeModal()">Fechar</button></div>`);
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="sharePR('${escAttr(name)}')">📤 Compartilhar</button>
+      <button class="btn btn-acc" style="flex:1;justify-content:center" onclick="closeModal()">Fechar</button>
+    </div>`);
+}
+export async function sharePR(name){
+  const entries=exerciseEntries(name);
+  if(!entries.length)return;
+  const pr=entries.reduce((m,e)=>e.load>m.load?e:m,entries[0]);
+  const e1rm=estimate1RM(pr.load,pr.reps);
+  const text=`🏆 Meu recorde no ${name}: ${pr.load} kg${pr.reps?' × '+pr.reps+' reps':''}${e1rm?' (1RM estimado ~'+e1rm+' kg)':''} 💪 — MEU GYM BRO`;
+  if(navigator.share){
+    try{await navigator.share({text});}catch(e){/* usuário cancelou */}
+    return;
+  }
+  try{
+    await navigator.clipboard.writeText(text);
+    toast('Copiado! Cola onde quiser 📤');
+  }catch(e){toast('Não deu pra copiar ❌');}
 }
 export function renderRecords(){
   const body=document.getElementById('rec-body');if(!body)return;

@@ -15,8 +15,7 @@ MEU GYM BRO/
 │   └── style.css           # Estilos (dark theme, cards, mobile-first) — importado em main.js
 ├── public/
 │   ├── manifest.json       # PWA manifest
-│   ├── sw.js               # Service worker (cache-first)
-│   ├── style.css           # Estilos (static, servidos por Vite)
+│   ├── sw.js               # Service worker (network-first p/ HTML, cache-first p/ assets)
 │   ├── icon-192x192.png    # App icon
 │   └── icon-512x512.png
 ├── src/
@@ -198,7 +197,7 @@ Se precisar debugar:
 ## Deploy Checklist
 
 - [x] CSS importado em main.js (Vite integration)
-- [x] Service worker com cache-first strategy
+- [x] Service worker: network-first p/ HTML (updates chegam), cache-first p/ assets hasheados, sem interceptar API externa
 - [x] Manifest.json com PWA metadata
 - [x] Icons 192x192 e 512x512
 - [x] Backup/Reset com suporte a migração de schema antigo
@@ -209,5 +208,6 @@ Se precisar debugar:
 - [x] Offline-first (localStorage + SW)
 - [x] Dark theme com accent #c6ff3a
 - [x] Pt-BR interface completa
+- [x] Acessibilidade básica (aria-labels, role dialog/status, aria-current nas tabs, Esc fecha modal)
+- [x] Compartilhar PR (Web Share API + fallback clipboard)
 - [ ] Analytics (opcional)
-- [ ] Acessibilidade (nice-to-have)

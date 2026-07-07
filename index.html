@@ -21,8 +21,8 @@
     <div><h1>MEU GYM BRO</h1><small>TREINO · DIETA</small></div>
   </div>
   <div class="spacer"></div>
-  <button class="icon-btn" id="sync-ind" onclick="openSyncModal()" title="Sincronização" style="display:none">☁️</button>
-  <button class="icon-btn" onclick="openMenu()" title="Opções">⚙️</button>
+  <button class="icon-btn" id="sync-ind" onclick="openSyncModal()" title="Sincronização" aria-label="Sincronização" style="display:none">☁️</button>
+  <button class="icon-btn" onclick="openMenu()" title="Opções" aria-label="Opções">⚙️</button>
 </header>
 
 <main>
@@ -124,10 +124,10 @@
 
 <!-- MODAL -->
 <div class="modal-bg" id="modal-bg">
-  <div class="modal" id="modal"></div>
+  <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script type="module" src="/src/main.js"></script>
 </body>

@@ -1,9 +1,10 @@
 /* ============ NAV ============ */
 export function go(v){
   document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(e=>{e.classList.remove('active');e.removeAttribute('aria-current');});
   document.getElementById('view-'+v).classList.add('active');
-  document.getElementById('tab-'+v).classList.add('active');
+  const tab=document.getElementById('tab-'+v);
+  tab.classList.add('active');tab.setAttribute('aria-current','page');
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -22,6 +23,9 @@ export function showModal(html){
 export function closeModal(){document.getElementById('modal-bg').classList.remove('show')}
 const modalBg=document.getElementById('modal-bg');
 if(modalBg)modalBg.addEventListener('click',e=>{if(e.target.id==='modal-bg')closeModal()});
+if(typeof document!=='undefined')document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&modalBg&&modalBg.classList.contains('show'))closeModal();
+});
 
 /* ============ DATAS (utilitário compartilhado) ============ */
 export function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
