@@ -194,9 +194,17 @@ export function renameMeal(id){
       <input id="m-name" value="${esc(m.name)}"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-acc" onclick="(function(){const v=document.getElementById('m-name').value.trim();if(v){var mm=S.meals.find(x=>x.id==='${id}');mm.name=v;save();renderDieta();closeModal();toast('Renomeada ✅')}})()">Salvar</button>
+      <button class="btn btn-acc" onclick="saveMealName('${id}')">Salvar</button>
     </div>`);
   setTimeout(()=>document.getElementById('m-name').focus(),100);
+}
+export function saveMealName(id){
+  const v=document.getElementById('m-name').value.trim();
+  if(!v)return;
+  const meals=S.mealDiary[_mealViewDate];
+  const m=meals.find(x=>x.id===id);
+  m.name=v;
+  save();renderDieta();closeModal();toast('Renomeada ✅');
 }
 export function delMeal(id){
   const meals=ensureMealDayExists(_mealViewDate);
