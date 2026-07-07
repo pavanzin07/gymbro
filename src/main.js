@@ -83,7 +83,8 @@ Object.assign(window,State,Ui,Perfil,Treino,Dieta,Progresso,Conquistas,Personage
 renderAll();
 
 /* ============ PWA / SERVICE WORKER ============ */
-if('serviceWorker' in navigator){
+// Só registra em produção — em dev o cache-first serviria módulos antigos.
+if('serviceWorker' in navigator&&import.meta.env.PROD){
   navigator.serviceWorker.register('/sw.js').catch(e=>{
     console.log('SW registration failed (dev or offline):',e.message);
   });
