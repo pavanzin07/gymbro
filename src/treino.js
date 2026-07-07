@@ -1,5 +1,6 @@
 import {S,save,uid,esc,num} from './state.js';
 import {toast,showModal,closeModal,svgChart,today,dShort,inp} from './ui.js';
+import {analyzeExercise} from './coach.js';
 import {splitCardsHTML} from './perfil.js';
 import {EXLIB,GRP_SYN} from './data/exercicios.js';
 import {renderRecords} from './conquistas.js';
@@ -8,6 +9,23 @@ import {renderProgresso} from './progresso.js';
 
 /* ============ TREINOS ============ */
 const LETTERS='ABCDEFGHIJ';
+// Card do coach: alerta exercícios estagnados/regredindo (até 3)
+function coachCardHTML(){
+  const alerts=[];
+  S.routines.forEach(r=>(r.exercises||[]).forEach(ex=>{
+    if(!ex.history||ex.history.length<2)return;
+    const a=analyzeExercise(ex.history);
+    if(a.status==='estagnado'||a.status==='regredindo')alerts.push({name:ex.name,a});
+  }));
+  if(!alerts.length)return'';
+  return `<div class="card">
+    <b style="font-size:15px">💡 Coach</b>
+    ${alerts.slice(0,3).map(x=>`<div style="margin-top:11px">
+      <div style="font-weight:700;font-size:13.5px">${esc(x.name)} ${x.a.status==='estagnado'?'· estagnado':'· caindo'}</div>
+      <div style="color:var(--mut);font-size:12.5px;margin-top:3px">${x.a.msg} ${x.a.tip}</div>
+    </div>`).join('')}
+  </div>`;
+}
 export function renderRoutines(){
   const box=document.getElementById('routines');
   const sub=document.getElementById('treino-sub');
@@ -32,7 +50,7 @@ export function renderRoutines(){
   }
   const totalEx=S.routines.reduce((a,r)=>a+r.exercises.length,0);
   sub.textContent=`${S.routines.length} treino${S.routines.length>1?'s':''} · ${totalEx} exercício${totalEx!==1?'s':''}`;
-  box.innerHTML=sessionTodayCardHTML()+S.routines.map((r,i)=>{
+  box.innerHTML=sessionTodayCardHTML()+coachCardHTML()+S.routines.map((r,i)=>{
     const exs=r.exercises.map(ex=>{
       const pr=exPR(ex);
       return `

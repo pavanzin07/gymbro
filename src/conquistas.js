@@ -1,5 +1,6 @@
 import {S,save,esc,num,uid} from './state.js';
 import {toast,showModal,closeModal,svgChart,dShort,today} from './ui.js';
+import {analyzeExercise} from './coach.js';
 import {allExerciseNames,latestWeight,characterMetrics,goalProgress,ACHIEVEMENTS,renderPersonagem} from './personagem.js';
 import {renderRoutines} from './treino.js';
 
@@ -68,12 +69,14 @@ export function exerciseDetail(name){
   const e1rm=estimate1RM(pr.load,pr.reps);
   const diff=+(last.load-first.load).toFixed(1);
   const chart=svgChart(entries.map(e=>({date:e.date,v:e.load})),'#ff9f43','det');
+  const coach=analyzeExercise(entries);
   showModal(`<h3>${esc(name)}</h3><p class="sub">${esc(musc)} · ${entries.length} registro${entries.length>1?'s':''} de carga</p>
     <div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr">
       <div class="stat"><div class="v">${pr.load}<small style="font-size:11px"> kg</small></div><div class="l">Recorde</div></div>
       <div class="stat"><div class="v">${e1rm||'–'}</div><div class="l">1RM est.</div></div>
       <div class="stat"><div class="v" style="color:${diff>=0?'var(--acc)':'var(--warn)'}">${diff>=0?'+':''}${diff}</div><div class="l">Evolução kg</div></div>
     </div>
+    <div class="why" style="margin-top:10px">💡 ${coach.msg} ${coach.tip}</div>
     ${chart?`<div class="chart-wrap">${chart}</div>`:'<div class="hint">Registre em pelo menos 2 dias pra ver o gráfico de progressão.</div>'}
     <div style="font-size:12px;color:var(--mut);font-weight:700;text-transform:uppercase;margin:14px 0 8px">Todos os registros</div>
     ${[...entries].reverse().map(e=>{const est=estimate1RM(e.load,e.reps);const isPR=e.load===pr.load;return `<div class="row">
