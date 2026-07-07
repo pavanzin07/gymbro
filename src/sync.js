@@ -76,6 +76,24 @@ export function mergeStates(a,aTs,b,bTs){
     other.progress.weight.forEach(w=>{if(!wd.has(w.date)){m.progress.weight.push(JSON.parse(JSON.stringify(w)));wd.add(w.date);}});
     m.progress.weight.sort((x,y)=>(x.date||'').localeCompare(y.date||''));
   }
+  // Histórico de carga: união por exercício (nome, case-insensitive) — um PR
+  // registrado no aparelho antigo não se perde. A estrutura de rotinas em si
+  // segue o estado mais novo; exercícios que só existem no antigo são ignorados.
+  if(Array.isArray(other.routines)&&Array.isArray(m.routines)){
+    const byName={};
+    m.routines.forEach(r=>(r.exercises||[]).forEach(ex=>{byName[(ex.name||'').toLowerCase()]=ex;}));
+    other.routines.forEach(r=>(r.exercises||[]).forEach(oex=>{
+      const mex=byName[(oex.name||'').toLowerCase()];
+      if(!mex||!Array.isArray(oex.history)||!oex.history.length)return;
+      if(!Array.isArray(mex.history))mex.history=[];
+      const seen=new Set(mex.history.map(h=>(h.date||'')+'|'+h.load+'|'+h.reps));
+      oex.history.forEach(h=>{
+        const k=(h.date||'')+'|'+h.load+'|'+h.reps;
+        if(!seen.has(k)){mex.history.push(JSON.parse(JSON.stringify(h)));seen.add(k);}
+      });
+      mex.history.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    }));
+  }
   return m;
 }
 

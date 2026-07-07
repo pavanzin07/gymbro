@@ -103,3 +103,59 @@ describe('mergeStates', () => {
     expect(JSON.stringify(newS)).toBe(before);
   });
 });
+
+describe('mergeStates — histórico de carga por exercício', () => {
+  function withRoutine(hist) {
+    const s = mkState();
+    s.routines = [{ id: 'r1', name: 'Treino A', exercises: [
+      { id: 'e1', name: 'Supino reto', sets: 3, reps: '8-10', history: hist }
+    ] }];
+    return s;
+  }
+
+  it('PR registrado só no lado antigo é preservado', () => {
+    const oldS = withRoutine([{ date: '2026-07-01', load: 100, reps: 5 }]);
+    const newS = withRoutine([{ date: '2026-07-03', load: 80, reps: 8 }]);
+    const m = mergeStates(newS, 2000, oldS, 1000);
+    const hist = m.routines[0].exercises[0].history;
+    expect(hist).toHaveLength(2);
+    expect(hist.map(h => h.date)).toEqual(['2026-07-01', '2026-07-03']);
+    expect(hist[0].load).toBe(100);
+  });
+
+  it('registros idênticos não duplicam', () => {
+    const entry = { date: '2026-07-01', load: 80, reps: 8 };
+    const oldS = withRoutine([{ ...entry }]);
+    const newS = withRoutine([{ ...entry }, { date: '2026-07-02', load: 82.5, reps: 8 }]);
+    const m = mergeStates(newS, 2000, oldS, 1000);
+    expect(m.routines[0].exercises[0].history).toHaveLength(2);
+  });
+
+  it('match de exercício ignora maiúsculas/minúsculas', () => {
+    const oldS = withRoutine([{ date: '2026-07-01', load: 100, reps: 5 }]);
+    oldS.routines[0].exercises[0].name = 'SUPINO RETO';
+    const newS = withRoutine([]);
+    const m = mergeStates(newS, 2000, oldS, 1000);
+    expect(m.routines[0].exercises[0].history).toHaveLength(1);
+  });
+
+  it('exercício que só existe no lado antigo é ignorado (estrutura segue o novo)', () => {
+    const oldS = withRoutine([]);
+    oldS.routines[0].exercises.push({ id: 'e2', name: 'Crucifixo', history: [{ date: '2026-07-01', load: 20, reps: 12 }] });
+    const newS = withRoutine([]);
+    const m = mergeStates(newS, 2000, oldS, 1000);
+    expect(m.routines[0].exercises).toHaveLength(1);
+    expect(m.routines[0].exercises[0].name).toBe('Supino reto');
+  });
+
+  it('exercício em rotina diferente ainda recebe o histórico (match global por nome)', () => {
+    const oldS = mkState();
+    oldS.routines = [{ id: 'rX', name: 'Antigo', exercises: [
+      { id: 'e9', name: 'supino reto', history: [{ date: '2026-06-20', load: 95, reps: 6 }] }
+    ] }];
+    const newS = withRoutine([{ date: '2026-07-03', load: 90, reps: 8 }]);
+    const m = mergeStates(newS, 2000, oldS, 1000);
+    const hist = m.routines[0].exercises[0].history;
+    expect(hist.map(h => h.load)).toEqual([95, 90]);
+  });
+});
