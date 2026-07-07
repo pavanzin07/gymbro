@@ -10,12 +10,13 @@ export const DEFAULT={
   activeChar:0,
   wallet:{owned:['short_black'],spent:0}, // moedas/itens compartilhados
   routines:[],
-  meals:[
+  mealTemplate:[ // modelo de refeições (base para copiar pra um dia)
     {id:uid(),name:'Café da manhã',foods:[]},
     {id:uid(),name:'Almoço',foods:[]},
     {id:uid(),name:'Lanche',foods:[]},
     {id:uid(),name:'Jantar',foods:[]}
   ],
+  mealDiary:{}, // { 'YYYY-MM-DD': [refeição] } — registro real por data
   targets:{kcal:2200,prot:160,carb:230,fat:70}
 };
 
@@ -39,6 +40,14 @@ export function load(){
       if(r.activeChar==null||r.activeChar>=r.characters.length)r.activeChar=0;
       if(!r.sessions)r.sessions=[];
       if(!r.goals)r.goals=[];
+      // Migração: meals array → mealTemplate + mealDiary
+      if(r.meals&&Array.isArray(r.meals)){
+        if(!r.mealTemplate)r.mealTemplate=r.meals;
+        if(!r.mealDiary)r.mealDiary={};
+        delete r.meals;
+      }
+      if(!r.mealTemplate)r.mealTemplate=[{id:uid(),name:'Café da manhã',foods:[]},{id:uid(),name:'Almoço',foods:[]},{id:uid(),name:'Lanche',foods:[]},{id:uid(),name:'Jantar',foods:[]}];
+      if(!r.mealDiary)r.mealDiary={};
       return r;
     }
   }catch(e){}

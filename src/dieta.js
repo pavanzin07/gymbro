@@ -1,25 +1,40 @@
 import {S,save,uid,esc,num} from './state.js';
-import {toast,showModal,closeModal} from './ui.js';
+import {toast,showModal,closeModal,today,dShort,parseLocalDate} from './ui.js';
 import {FOODS,COMBOS,CATLABEL} from './data/alimentos.js';
 
 /* ============ ALIMENTAÇÃO ============ */
+let _mealViewDate=today(); // data que está sendo visualizada na aba Dieta
 export function mealTotals(m){
   return m.foods.reduce((a,f)=>({
     kcal:a.kcal+num(f.kcal),prot:a.prot+num(f.prot),
     carb:a.carb+num(f.carb),fat:a.fat+num(f.fat)
   }),{kcal:0,prot:0,carb:0,fat:0});
 }
-export function dayTotals(){
-  return S.meals.reduce((a,m)=>{const t=mealTotals(m);return{
+function getMealsForDate(date){
+  if(!S.mealDiary[date])return[];
+  return S.mealDiary[date];
+}
+function ensureMealDayExists(date){
+  if(!S.mealDiary[date])S.mealDiary[date]=JSON.parse(JSON.stringify(S.mealTemplate));
+  return S.mealDiary[date];
+}
+function copyTemplateToDay(date){
+  S.mealDiary[date]=JSON.parse(JSON.stringify(S.mealTemplate));
+  save();
+}
+export function dayTotals(date=today()){
+  const meals=getMealsForDate(date);
+  return meals.reduce((a,m)=>{const t=mealTotals(m);return{
     kcal:a.kcal+t.kcal,prot:a.prot+t.prot,carb:a.carb+t.carb,fat:a.fat+t.fat
   }},{kcal:0,prot:0,carb:0,fat:0});
 }
 const R=n=>Math.round(n);
 export function renderDieta(){
-  const t=dayTotals(),g=S.targets;
+  const t=dayTotals(_mealViewDate),g=S.targets;
+  const isToday=_mealViewDate===today();
   const sub=document.getElementById('dieta-sub');
   if(!sub)return;
-  sub.textContent=`${R(t.kcal)} / ${g.kcal} kcal hoje`;
+  sub.textContent=`${R(t.kcal)} / ${g.kcal} kcal ${isToday?'hoje':dShort(_mealViewDate)}`;
   const barRow=(lbl,cls,val,goal,unit,color)=>{
     const pct=goal>0?Math.min(100,Math.round(val/goal*100)):0;
     return `<div class="macro-box ${cls}">
@@ -43,7 +58,14 @@ export function renderDieta(){
     </div>`;
 
   const box=document.getElementById('meals');
-  box.innerHTML=S.meals.map(m=>{
+  const meals=getMealsForDate(_mealViewDate);
+  const dateNav=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px">
+    <button class="btn btn-ghost btn-sm" onclick="switchMealDate(-1)">← Anterior</button>
+    <span style="font-weight:700;font-size:13px">${dShort(_mealViewDate)}</span>
+    <button class="btn btn-ghost btn-sm" onclick="switchMealDate(1)">Próxima →</button>
+  </div>
+  ${!meals.length?`<div style="margin-bottom:10px"><button class="btn btn-ghost btn-sm" onclick="copyMealTemplate()" style="width:100%;justify-content:center">📋 Copiar modelo do dia</button></div>`:''}`;
+  box.innerHTML=dateNav+meals.map(m=>{
     const t=mealTotals(m);
     const foods=m.foods.map(f=>`
       <div class="row">
@@ -82,7 +104,8 @@ export function renderDieta(){
 }
 
 export function reviewDiet(){
-  const anyFood=S.meals.some(m=>m.foods.length);
+  const meals=getMealsForDate(_mealViewDate);
+  const anyFood=meals.some(m=>m.foods.length);
   if(!anyFood){showModal(`<h3>🔍 Revisão da dieta</h3><p class="sub"></p>
     <div class="why">Você ainda não adicionou alimentos. Monte suas refeições (pode usar as 💡 Sugestões) e volte que eu analiso pra você 🍽️</div>
     <div class="modal-actions"><button class="btn btn-acc" style="flex:1;justify-content:center" onclick="closeModal()">Ok</button></div>`);return;}
@@ -157,10 +180,12 @@ export function openMeal(){
 export function saveMeal(){
   const name=document.getElementById('m-name').value.trim();
   if(!name){toast('Dá um nome pra refeição 🍽️');return}
-  S.meals.push({id:uid(),name,foods:[]});save();renderDieta();closeModal();toast('Refeição criada ✅');
+  const meals=ensureMealDayExists(_mealViewDate);
+  meals.push({id:uid(),name,foods:[]});save();renderDieta();closeModal();toast('Refeição criada ✅');
 }
 export function renameMeal(id){
-  const m=S.meals.find(x=>x.id===id);
+  const meals=ensureMealDayExists(_mealViewDate);
+  const m=meals.find(x=>x.id===id);
   showModal(`
     <h3>Renomear refeição</h3><p class="sub"></p>
     <div class="field"><label>Nome</label>
@@ -172,13 +197,16 @@ export function renameMeal(id){
   setTimeout(()=>document.getElementById('m-name').focus(),100);
 }
 export function delMeal(id){
-  const m=S.meals.find(x=>x.id===id);
+  const meals=ensureMealDayExists(_mealViewDate);
+  const m=meals.find(x=>x.id===id);
   if(!confirm(`Apagar a refeição "${m.name}"?`))return;
-  S.meals=S.meals.filter(x=>x.id!==id);save();renderDieta();toast('Refeição removida');
+  const filtered=meals.filter(x=>x.id!==id);
+  S.mealDiary[_mealViewDate]=filtered;save();renderDieta();toast('Refeição removida');
 }
 
 export function openFood(mid,fid){
-  const m=S.meals.find(x=>x.id===mid);
+  const meals=ensureMealDayExists(_mealViewDate);
+  const m=meals.find(x=>x.id===mid);
   const f=fid?m.foods.find(x=>x.id===fid):null;
   showModal(`
     <h3>${f?'Editar alimento':'Novo alimento'}</h3>
@@ -210,7 +238,8 @@ export function openFood(mid,fid){
   setTimeout(()=>document.getElementById('f-name').focus(),100);
 }
 export function saveFood(mid,fid){
-  const m=S.meals.find(x=>x.id===mid);
+  const meals=ensureMealDayExists(_mealViewDate);
+  const m=meals.find(x=>x.id===mid);
   const name=document.getElementById('f-name').value.trim();
   if(!name){toast('Qual o alimento? 🍗');return}
   const data={
@@ -226,7 +255,8 @@ export function saveFood(mid,fid){
   save();renderDieta();closeModal();toast('Alimento salvo ✅');
 }
 export function delFood(mid,fid){
-  const m=S.meals.find(x=>x.id===mid);
+  const meals=ensureMealDayExists(_mealViewDate);
+  const m=meals.find(x=>x.id===mid);
   m.foods=m.foods.filter(x=>x.id!==fid);save();renderDieta();toast('Alimento removido');
 }
 
@@ -260,7 +290,8 @@ export function comboAllowed(c){
 }
 export function comboTotals(c){return c.foods.reduce((a,f)=>({k:a.k+f.kcal,p:a.p+f.prot,cb:a.cb+f.carb,ft:a.ft+f.fat}),{k:0,p:0,cb:0,ft:0});}
 export function mealSuggest(mid){
-  const m=S.meals.find(x=>x.id===mid);const cat=detectCat(m.name);
+  const meals=ensureMealDayExists(_mealViewDate);
+  const m=meals.find(x=>x.id===mid);const cat=detectCat(m.name);
   let idxs=COMBOS.map((c,i)=>i).filter(i=>(!cat||COMBOS[i].cat===cat)&&comboAllowed(COMBOS[i]));
   if(!idxs.length)idxs=COMBOS.map((c,i)=>i).filter(i=>comboAllowed(COMBOS[i]));
   const r=(S.profile&&S.profile.restrictions)||[];
@@ -282,7 +313,19 @@ export function mealSuggest(mid){
     <div class="modal-actions"><button class="btn btn-acc" style="flex:1;justify-content:center" onclick="closeModal()">Concluir</button></div>`);
 }
 export function addCombo(mid,i){
-  const m=S.meals.find(x=>x.id===mid);const c=COMBOS[i];
+  const meals=ensureMealDayExists(_mealViewDate);
+  const m=meals.find(x=>x.id===mid);const c=COMBOS[i];
   c.foods.forEach(f=>m.foods.push({id:uid(),name:f.name,qty:f.qty,kcal:String(f.kcal),prot:String(f.prot),carb:String(f.carb),fat:String(f.fat)}));
   save();renderDieta();closeModal();toast(c.name+' adicionado 🍽️');
+}
+export function switchMealDate(days){
+  const d=parseLocalDate(_mealViewDate);
+  d.setDate(d.getDate()+days);
+  _mealViewDate=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  renderDieta();
+}
+export function copyMealTemplate(){
+  copyTemplateToDay(_mealViewDate);
+  renderDieta();
+  toast('Modelo copiado pro dia 📋');
 }
