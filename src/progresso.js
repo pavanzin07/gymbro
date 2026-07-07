@@ -1,5 +1,6 @@
 import {S,save,num,esc} from './state.js';
 import {toast,showModal,closeModal,svgChart,today,dShort,parseLocalDate} from './ui.js';
+import {weightTrend,adherence,volumeTrend} from './coach.js';
 import {chipRow,chipVal,applyChoices,renderPerfil} from './perfil.js';
 import {renderDieta,dayTotals} from './dieta.js';
 import {MET,INTENS} from './data/atividades.js';
@@ -86,6 +87,23 @@ export function renderProgresso(){
       ${svgChart(wArr.map(w=>({date:w.date,v:w.v})),'#c6ff3a','w')?`<div class="chart-wrap">${svgChart(wArr.map(w=>({date:w.date,v:w.v})),'#c6ff3a','w')}</div>`:''}`;
   }
 
+  // tendências
+  const wt=weightTrend(P.weight);
+  const ad=adherence(P.days,t,28);
+  const vt=volumeTrend(S.sessions,t);
+  const trendRows=[];
+  if(wt&&wt.spanDays>=7){
+    const dir=wt.ratePerWeek>0.05?'subindo':wt.ratePerWeek<-0.05?'descendo':'estável';
+    trendRows.push(`<div class="row"><div class="name"><b>⚖️ Peso ${dir}</b><span>${wt.ratePerWeek>0?'+':''}${wt.ratePerWeek} kg/semana · janela de ${wt.spanDays} dias</span></div></div>`);
+  }
+  if(vt.cur||vt.prev){
+    trendRows.push(`<div class="row"><div class="name"><b>🏋️ Volume 7 dias: ${vt.cur.toLocaleString('pt-BR')} kg</b><span>${vt.deltaPct==null?'registre mais uma semana pra comparar':(vt.deltaPct>=0?'+':'')+vt.deltaPct+'% vs semana anterior'}</span></div></div>`);
+  }
+  if(ad.workout||ad.diet){
+    trendRows.push(`<div class="row"><div class="name"><b>✅ Aderência (4 semanas)</b><span>treino ${ad.workoutPct}% (${ad.workout}/${ad.nDays} dias) · dieta ${ad.dietPct}%</span></div></div>`);
+  }
+  const trendCard=trendRows.length?`<div class="card"><b style="font-size:15px">📊 Tendências</b>${trendRows.join('')}</div>`:'';
+
   // medidas
   const mArr=P.measures.filter(m=>m[measSel]!=null&&m[measSel]!=='').map(m=>({date:m.date,v:num(m[measSel])})).sort((a,b)=>a.date.localeCompare(b.date));
   let medBlock;
@@ -136,6 +154,8 @@ export function renderProgresso(){
       <div class="hist-dots">${hist}</div>
       <div style="font-size:11px;color:var(--mut);margin-top:8px">Últimos 21 dias · 🟩 treino · 🟦 dieta</div>
     </div>
+
+    ${trendCard}
 
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between">

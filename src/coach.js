@@ -1,4 +1,5 @@
 import {num} from './state.js';
+import {parseLocalDate} from './ui.js';
 
 /* ============ COACH DE PROGRESSÃO ============
    Análise por regras das últimas sessões de um exercício.
@@ -31,4 +32,51 @@ export function analyzeExercise(entries){
   if(last<first)
     return{status:'regredindo',msg:`Caiu de ${first} pra ${last} kg. 📉`,tip:'Acontece — confira sono e comida. Uma semana mais leve (−10%) ajuda a voltar a subir.'};
   return{status:'mantendo',msg:'Carga oscilando, mas mantida.',tip:'Consistência primeiro; a força vem em seguida.'};
+}
+
+/* ============ TENDÊNCIAS (aba Progresso) ============ */
+
+// Taxa de variação de peso em kg/semana — regressão linear sobre os
+// últimos 10 registros. null se não há dados suficientes.
+export function weightTrend(weights){
+  const pts=(weights||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).slice(-10);
+  if(pts.length<2)return null;
+  const base=parseLocalDate(pts[0].date).getTime();
+  const xs=pts.map(p=>(parseLocalDate(p.date).getTime()-base)/864e5);
+  const ys=pts.map(p=>num(p.v));
+  const n=xs.length;
+  const sx=xs.reduce((a,b)=>a+b,0),sy=ys.reduce((a,b)=>a+b,0);
+  const sxx=xs.reduce((a,b)=>a+b*b,0),sxy=xs.reduce((a,x,i)=>a+x*ys[i],0);
+  const denom=n*sxx-sx*sx;
+  if(!denom)return null; // registros todos no mesmo dia
+  const slope=(n*sxy-sx*sy)/denom; // kg por dia
+  return{ratePerWeek:+(slope*7).toFixed(2),n,spanDays:Math.round(xs[n-1]-xs[0]),last:ys[n-1]};
+}
+
+// Aderência nos últimos nDays: quantos dias com treino/dieta marcados.
+export function adherence(days,todayStr,nDays=28){
+  const end=parseLocalDate(todayStr);
+  let workout=0,diet=0;
+  for(let i=0;i<nDays;i++){
+    const d=new Date(end);d.setDate(end.getDate()-i);
+    const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const day=(days||{})[k];
+    if(day&&day.workout)workout++;
+    if(day&&day.diet)diet++;
+  }
+  return{workout,diet,nDays,workoutPct:Math.round(workout/nDays*100),dietPct:Math.round(diet/nDays*100)};
+}
+
+// Volume de treino: últimos 7 dias vs 7 anteriores.
+export function volumeTrend(sessions,todayStr){
+  const end=parseLocalDate(todayStr).getTime();
+  let cur=0,prev=0;
+  (sessions||[]).forEach(s=>{
+    if(!s.date)return;
+    const d=(end-parseLocalDate(s.date).getTime())/864e5;
+    if(d<0)return;
+    if(d<7)cur+=num(s.volume);
+    else if(d<14)prev+=num(s.volume);
+  });
+  return{cur:Math.round(cur),prev:Math.round(prev),deltaPct:prev?Math.round((cur-prev)/prev*100):null};
 }

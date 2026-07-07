@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { suggestNextLoad, maxLoadByDate, analyzeExercise } from '../../src/coach.js';
+import { suggestNextLoad, maxLoadByDate, analyzeExercise, weightTrend, adherence, volumeTrend } from '../../src/coach.js';
 
 describe('suggestNextLoad', () => {
   it('sugere ~2,5% a mais, arredondado pra 0,5 kg', () => {
@@ -72,5 +72,71 @@ describe('analyzeExercise', () => {
     expect(a.status).toBe('progredindo');
     expect(a.msg).toContain('90');
     expect(a.msg).toContain('95');
+  });
+});
+
+describe('weightTrend', () => {
+  it('perda constante de 0,5 kg/semana é detectada', () => {
+    const w = [
+      { date: '2026-06-01', v: 82 },
+      { date: '2026-06-08', v: 81.5 },
+      { date: '2026-06-15', v: 81 },
+      { date: '2026-06-22', v: 80.5 }
+    ];
+    const t = weightTrend(w);
+    expect(t.ratePerWeek).toBeCloseTo(-0.5, 1);
+    expect(t.spanDays).toBe(21);
+    expect(t.last).toBe(80.5);
+  });
+  it('menos de 2 registros → null', () => {
+    expect(weightTrend([])).toBeNull();
+    expect(weightTrend([{ date: '2026-07-01', v: 80 }])).toBeNull();
+  });
+  it('registros fora de ordem são ordenados antes do cálculo', () => {
+    const t = weightTrend([
+      { date: '2026-06-15', v: 81 },
+      { date: '2026-06-01', v: 82 },
+      { date: '2026-06-08', v: 81.5 }
+    ]);
+    expect(t.ratePerWeek).toBeCloseTo(-0.5, 1);
+  });
+});
+
+describe('adherence', () => {
+  it('conta dias com treino/dieta na janela', () => {
+    const days = {
+      '2026-07-07': { workout: true, diet: true },
+      '2026-07-06': { workout: true },
+      '2026-07-05': { diet: true },
+      '2026-06-01': { workout: true } // fora da janela de 28 dias? 2026-06-10 é o limite
+    };
+    const a = adherence(days, '2026-07-07', 28);
+    expect(a.workout).toBe(2);
+    expect(a.diet).toBe(2);
+    expect(a.workoutPct).toBe(7);
+  });
+  it('sem dados → tudo zero', () => {
+    const a = adherence({}, '2026-07-07');
+    expect(a.workout).toBe(0);
+    expect(a.dietPct).toBe(0);
+  });
+});
+
+describe('volumeTrend', () => {
+  it('compara últimos 7 dias com os 7 anteriores', () => {
+    const sessions = [
+      { date: '2026-07-06', volume: 3000 }, // atual
+      { date: '2026-07-02', volume: 2000 }, // atual (5 dias atrás)
+      { date: '2026-06-28', volume: 4000 }, // anterior (9 dias atrás)
+      { date: '2026-06-20', volume: 9999 }  // fora das duas janelas
+    ];
+    const v = volumeTrend(sessions, '2026-07-07');
+    expect(v.cur).toBe(5000);
+    expect(v.prev).toBe(4000);
+    expect(v.deltaPct).toBe(25);
+  });
+  it('sem semana anterior → deltaPct null', () => {
+    const v = volumeTrend([{ date: '2026-07-06', volume: 1000 }], '2026-07-07');
+    expect(v.deltaPct).toBeNull();
   });
 });
