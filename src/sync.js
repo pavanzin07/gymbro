@@ -26,9 +26,26 @@ export async function initSync(opts={}){
   sb=createClient(SB_URL,SB_KEY);
   const {data}=await sb.auth.getSession();
   user=data&&data.session?data.session.user:null;
-  sb.auth.onAuthStateChange((_ev,session)=>{user=session?session.user:null;});
+  sb.auth.onAuthStateChange((ev,session)=>{
+    user=session?session.user:null;
+    updateIndicator();
+    if(ev==='PASSWORD_RECOVERY')openNewPasswordModal();
+  });
   window.addEventListener('gymbro:saved',schedulePush);
+  updateIndicator();
   if(user)syncNow(true);
+}
+
+/* ---- indicador ☁️ no header ---- */
+function updateIndicator(){
+  const el=document.getElementById('sync-ind');
+  if(!el)return;
+  if(!syncConfigured()){el.style.display='none';return;}
+  el.style.display='';
+  el.style.opacity=user?'1':'.45';
+  el.title=user
+    ?('Sincronizado como '+(user.email||'')+(lastSync?' · última: '+new Date(lastSync).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''))
+    :'Sincronização desconectada — toque pra entrar';
 }
 
 /* ---- merge: o blob mais novo ganha; o mais antigo preenche buracos ----
@@ -77,6 +94,7 @@ export async function syncNow(silent){
     }
     await pushNow();
     lastSync=Date.now();
+    updateIndicator();
     if(!silent)toast('Sincronizado ☁️');
   }catch(e){
     console.log('sync error:',e.message);
@@ -120,8 +138,35 @@ export async function syncSignUp(){
 export async function syncSignOut(){
   await sb.auth.signOut();
   user=null;
+  updateIndicator();
   toast('Desconectado. Seus dados continuam neste aparelho.');
   openSyncModal();
+}
+export async function syncForgot(){
+  const email=document.getElementById('sy-email').value.trim();
+  if(!email){toast('Digite seu e-mail no campo acima');return;}
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});
+  if(error){toast('Erro: '+error.message);return;}
+  toast('E-mail de recuperação enviado 📧');
+}
+export function openNewPasswordModal(){
+  showModal(`<h3>🔑 Nova senha</h3>
+    <p class="sub">Você chegou pelo link de recuperação. Defina a nova senha.</p>
+    <div class="field"><label>Nova senha</label><input id="sy-newpass" type="password" placeholder="6+ caracteres"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-acc" onclick="syncSetNewPassword()">Salvar senha</button>
+    </div>`);
+  setTimeout(()=>{const el=document.getElementById('sy-newpass');if(el)el.focus();},100);
+}
+export async function syncSetNewPassword(){
+  const pass=document.getElementById('sy-newpass').value;
+  if(pass.length<6){toast('Senha precisa de 6+ caracteres');return;}
+  const {error}=await sb.auth.updateUser({password:pass});
+  if(error){toast('Erro: '+error.message);return;}
+  toast('Senha atualizada ✅');
+  closeModal();
+  await syncNow(true);
 }
 
 /* ---- UI ---- */
@@ -150,6 +195,7 @@ export function openSyncModal(){
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="syncSignUp()" style="flex:1;justify-content:center">Criar conta</button>
       <button class="btn btn-acc" onclick="syncSignIn()" style="flex:1;justify-content:center">Entrar</button>
-    </div>`);
+    </div>
+    <p class="hint" style="text-align:center;margin-top:10px"><a href="#" style="color:var(--acc)" onclick="syncForgot();return false">Esqueci a senha</a></p>`);
   setTimeout(()=>{const el=document.getElementById('sy-email');if(el)el.focus();},100);
 }

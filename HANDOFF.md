@@ -158,7 +158,7 @@ npm run test:e2e     # Playwright: 5 fluxos E2E (perfil→dieta, exercício via 
 - **Analytics**: Adicionar event tracking (Plausible/Umami self-hosted)
 
 ### Médio Prazo (Fase 6+)
-- **Sync v2**: recuperação de senha na UI, merge por exercício (history), indicador de status no header
+- **Sync v2**: merge por exercício (history dentro de routines)
 - **Social**:
   - Leaderboard de recordes por exercício
   - Compartilhar PR com amigos via link

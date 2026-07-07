@@ -35,7 +35,10 @@ Grátis, sem cartão de crédito, ~5 minutos. Sem isso o app continua funcionand
 - **Pull + merge no login/boot**: o estado mais recente ganha, mas dias de check-in, diário alimentar, sessões de treino e registros de peso que só existem no lado mais antigo são preservados (união por data).
 - **Privacidade**: Row Level Security garante que cada usuário só acessa os próprios dados.
 
-## Limitações conhecidas (v1)
+## Limitações conhecidas
 
 - Edições simultâneas no mesmo dia em dois aparelhos offline: vence o que salvou por último (exceto os campos com união por data, listados acima).
-- Recuperação de senha ainda não tem UI — use "Forgot password" no painel do Supabase se precisar.
+
+## Recuperação de senha
+
+No modal de login, digite seu e-mail e toque em **"Esqueci a senha"**. Você recebe um link por e-mail; ao abrir, o app pede a nova senha automaticamente.
