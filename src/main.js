@@ -72,3 +72,10 @@ Object.assign(window,State,Ui,Perfil,Treino,Dieta,Progresso,Conquistas,Personage
 
 /* ============ INIT ============ */
 renderAll();
+
+/* ============ PWA / SERVICE WORKER ============ */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(e=>{
+    console.log('SW registration failed (dev or offline):',e.message);
+  });
+}

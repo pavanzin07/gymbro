@@ -1,0 +1,63 @@
+{
+  "name": "MEU GYM BRO",
+  "short_name": "GYM BRO",
+  "description": "Treino e dieta com gamificação RPG. Calcula macros, sugere divisões, registra força e evolui seu personagem.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0d0f12",
+  "background_color": "#0d0f12",
+  "accent_color": "#c6ff3a",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "./icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "./icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["fitness", "health"],
+  "shortcuts": [
+    {
+      "name": "Treino de hoje",
+      "short_name": "Treino",
+      "description": "Abrir a aba de treino",
+      "url": "./?tab=treino",
+      "icons": [
+        {
+          "src": "./icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Progresso",
+      "short_name": "Progresso",
+      "description": "Ver seu acompanhamento",
+      "url": "./?tab=progresso",
+      "icons": [
+        {
+          "src": "./icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
