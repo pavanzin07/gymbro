@@ -26,8 +26,9 @@ MEU GYM BRO/
 │   ├── treino.js           # Routines, exercises, suggestExercises, rest timer
 │   ├── dieta.js            # Meal diary per-date, foods, combos, macro totals, diet review, auto-completion
 │   ├── progresso.js        # Daily check-ins, weight, water, streak, graphs
-│   ├── conquistas.js       # Goals, achievements, exercise records, 1RM estimate
+│   ├── conquistas.js       # Goals, achievements, exercise records, 1RM estimate, share PR
 │   ├── personagem.js       # Character metrics (XP/coins/level/stats), shop, avatar SVG
+│   ├── coach.js            # Análise pura: progressão de carga, tendências de peso/volume/aderência, ETA de meta
 │   ├── sync.js             # Cloud sync opcional (Supabase): auth, pull/merge/push
 
 │   └── data/
@@ -145,8 +146,10 @@ npm run test:e2e     # Playwright: 5 fluxos E2E (perfil→dieta, exercício via 
 7. **Diário Alimentar**: Refeições agora por data (`mealTemplate` + `mealDiary`), com cópia automática de template para novo dia
 8. **Auto-Completion**: "Dieta em dia" marcada automaticamente se kcal ±10% e proteína ±10% batem com metas
 9. **Backup/Reset**: Suporta importação de backups antigos (migração automática de `meals[]` → `mealTemplate`+`mealDiary`)
-10. **Cloud Sync (opcional)**: Supabase via `.env.local` — auth e-mail/senha, push com debounce 3s após cada save(), pull+merge no login (mais novo vence; dias/diário/sessões/pesos exclusivos do lado antigo são preservados). Sem config, o bundle nem inclui o cliente Supabase (tree-shaken). Setup: `SETUP-SYNC.md`
-11. **Comportamento**: 100% idêntico ao protótipo; localStorage `meu_gym_bro_v1` mantido, dados migram automaticamente
+10. **Cloud Sync (opcional)**: Supabase via `.env.local` — auth e-mail/senha, push com debounce 3s após cada save(), pull+merge no login (mais novo vence; dias/diário/sessões/pesos/histórico de carga exclusivos do lado antigo são preservados). Sem config, o bundle nem inclui o cliente Supabase (tree-shaken). Setup: `SETUP-SYNC.md`
+11. **Coach de progressão**: analisa as últimas 4 sessões por exercício (estagnado/progredindo/regredindo) e sugere próxima carga; card na aba Treino + linha no detalhe do exercício
+12. **Tendências**: kg/semana por regressão linear, aderência 4 semanas, volume 7d vs 7d anteriores, ETA da meta de peso — card na aba Progresso
+13. **Comportamento**: 100% idêntico ao protótipo; localStorage `meu_gym_bro_v1` mantido, dados migram automaticamente
 
 ## Próximos Passos Sugeridos
 
@@ -156,8 +159,7 @@ npm run test:e2e     # Playwright: 5 fluxos E2E (perfil→dieta, exercício via 
 - **Mobile**: Testar em iOS/Android, notificações push (opcional)
 - **Analytics**: Adicionar event tracking (Plausible/Umami self-hosted)
 
-### Médio Prazo (Fase 6+)
-- **Sync v2**: merge por exercício (history dentro de routines)
+### Médio Prazo
 - **Social**:
   - Leaderboard de recordes por exercício
   - Compartilhar PR com amigos via link
@@ -202,8 +204,11 @@ Se precisar debugar:
 - [x] Icons 192x192 e 512x512
 - [x] Backup/Reset com suporte a migração de schema antigo
 - [x] Cloud sync opcional (Supabase + merge offline-first, veja SETUP-SYNC.md)
-- [x] Testes unitários (46 passing)
-- [x] Testes E2E (5 flows)
+- [x] Coach de progressão + tendências (client-side, funções puras testadas)
+- [x] Testes unitários (73 passing)
+- [x] Testes E2E (8 flows)
+- [x] Deploy automatizado (GitHub Actions → Pages; netlify.toml alternativo; DEPLOY.md)
+- [x] README.md + CLAUDE.md
 - [x] Build produção (dist/ com hash, ~130KB JS, ~39KB gzipped)
 - [x] Offline-first (localStorage + SW)
 - [x] Dark theme com accent #c6ff3a
