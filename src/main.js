@@ -10,7 +10,7 @@ import * as Personagem from './personagem.js';
 const {S,save,DEFAULT,uid,replaceState}=State;
 const {showModal,closeModal,toast}=Ui;
 const {renderPerfil}=Perfil;
-const {renderRoutines}=Treino;
+const {renderRoutines,startRestTimer}=Treino;
 const {renderDieta}=Dieta;
 const {renderProgresso}=Progresso;
 const {renderRecords}=Conquistas;

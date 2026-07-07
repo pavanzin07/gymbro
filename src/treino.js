@@ -183,8 +183,54 @@ export function saveSet(rid,eid){
   const prevPR=exPR(ex);
   ex.history.push({date,load:+load.toFixed(1),reps});
   ex.load=String(+load.toFixed(1));
-  save();renderRoutines();renderRecords();renderPersonagem();closeModal();
-  if(!prevPR||load>num(prevPR.load))toast('🏆 Novo recorde: '+load+' kg! +15 🪙');else toast('Carga registrada ✅');
+  save();renderRoutines();renderRecords();renderPersonagem();
+  const msg=!prevPR||load>num(prevPR.load)?'🏆 Novo recorde: '+load+' kg! +15 🪙':'Carga registrada ✅';
+  const restSecs=num(ex.rest)||90;
+  closeModal();toast(msg);startRestTimer(restSecs);
+}
+
+/* ============ TIMER DE DESCANSO ============ */
+function playBeep(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.frequency.value=1000;osc.type='sine';
+    gain.gain.setValueAtTime(.3,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.01,ctx.currentTime+.1);
+    osc.start(ctx.currentTime);osc.stop(ctx.currentTime+.1);
+  }catch(e){}
+}
+function vibrate(){if(navigator.vibrate)navigator.vibrate(200);}
+export function startRestTimer(secs=90){
+  const div=document.createElement('div');
+  div.className='card';
+  div.id='rest-timer-card';
+  div.style.position='fixed';div.style.bottom='100px';div.style.left='10px';div.style.right='10px';div.style.zIndex='80';
+  let remaining=secs;
+  const update=()=>{
+    const min=Math.floor(remaining/60),sec=remaining%60;
+    div.innerHTML=`<div style="text-align:center;font-size:48px;font-weight:900;color:var(--acc);margin:10px 0">${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}</div>
+      <p style="text-align:center;color:var(--mut);font-size:13px;margin:0 0 14px">Descanso</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="document.getElementById('rest-timer-card')?.remove()" style="flex:1">Pronto</button>
+        <button class="btn btn-ghost" onclick="startRestTimer(${remaining}+15)" style="flex:1">+15s</button>
+      </div>`;
+  };
+  update();document.body.appendChild(div);
+  const interval=setInterval(()=>{
+    remaining--;update();
+    if(remaining<=0){
+      clearInterval(interval);
+      playBeep();vibrate();playBeep();
+      setTimeout(()=>{
+        div.innerHTML=`<div style="text-align:center"><div style="font-size:36px;margin:10px 0">✅ Pronto!</div>
+          <p style="color:var(--mut);font-size:13px;margin:0 0 14px">Vamos lá mais uma série 💪</p>
+          <button class="btn btn-acc" onclick="document.getElementById('rest-timer-card')?.remove()" style="width:100%;justify-content:center">Continuar</button></div>`;
+      },200);
+    }
+  },1000);
 }
 
 /* ============ REVISÃO DE TREINO ============ */
