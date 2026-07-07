@@ -132,6 +132,7 @@ function schedulePush(){
 
 /* ---- auth ---- */
 export async function syncSignIn(){
+  if(!sb){toast('Sem conexão com o servidor — tente de novo online');return;}
   const email=document.getElementById('sy-email').value.trim();
   const pass=document.getElementById('sy-pass').value;
   if(!email||!pass){toast('Preencha e-mail e senha');return;}
@@ -142,6 +143,7 @@ export async function syncSignIn(){
   await syncNow(true);
 }
 export async function syncSignUp(){
+  if(!sb){toast('Sem conexão com o servidor — tente de novo online');return;}
   const email=document.getElementById('sy-email').value.trim();
   const pass=document.getElementById('sy-pass').value;
   if(!email||!pass){toast('Preencha e-mail e senha');return;}
@@ -161,6 +163,7 @@ export async function syncSignOut(){
   openSyncModal();
 }
 export async function syncForgot(){
+  if(!sb){toast('Sem conexão com o servidor — tente de novo online');return;}
   const email=document.getElementById('sy-email').value.trim();
   if(!email){toast('Digite seu e-mail no campo acima');return;}
   const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});
