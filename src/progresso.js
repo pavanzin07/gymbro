@@ -1,6 +1,6 @@
 import {S,save,num,esc} from './state.js';
 import {toast,showModal,closeModal,svgChart,today,dShort,parseLocalDate} from './ui.js';
-import {weightTrend,adherence,volumeTrend} from './coach.js';
+import {weightTrend,adherence,volumeTrend,goalEta} from './coach.js';
 import {chipRow,chipVal,applyChoices,renderPerfil} from './perfil.js';
 import {renderDieta,dayTotals} from './dieta.js';
 import {MET,INTENS} from './data/atividades.js';
@@ -95,6 +95,13 @@ export function renderProgresso(){
   if(wt&&wt.spanDays>=7){
     const dir=wt.ratePerWeek>0.05?'subindo':wt.ratePerWeek<-0.05?'descendo':'estável';
     trendRows.push(`<div class="row"><div class="name"><b>⚖️ Peso ${dir}</b><span>${wt.ratePerWeek>0?'+':''}${wt.ratePerWeek} kg/semana · janela de ${wt.spanDays} dias</span></div></div>`);
+    const wGoal=(S.goals||[]).find(g=>g.type==='peso');
+    if(wGoal){
+      const eta=goalEta(wt.ratePerWeek,wt.last,num(wGoal.target));
+      if(eta===0)trendRows.push(`<div class="row"><div class="name"><b>🎯 Meta de peso atingida!</b><span>${wGoal.target} kg — parabéns 🎉</span></div></div>`);
+      else if(eta!=null&&eta<=104)trendRows.push(`<div class="row"><div class="name"><b>🎯 Rumo aos ${wGoal.target} kg</b><span>no ritmo atual: ~${eta} semana${eta!==1?'s':''}</span></div></div>`);
+      else if(eta==null&&Math.abs(wt.ratePerWeek)>=0.05)trendRows.push(`<div class="row"><div class="name"><b>🎯 Meta: ${wGoal.target} kg</b><span>o peso está indo na direção contrária — revise calorias na aba Perfil</span></div></div>`);
+    }
   }
   if(vt.cur||vt.prev){
     trendRows.push(`<div class="row"><div class="name"><b>🏋️ Volume 7 dias: ${vt.cur.toLocaleString('pt-BR')} kg</b><span>${vt.deltaPct==null?'registre mais uma semana pra comparar':(vt.deltaPct>=0?'+':'')+vt.deltaPct+'% vs semana anterior'}</span></div></div>`);

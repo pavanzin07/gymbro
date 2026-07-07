@@ -67,6 +67,18 @@ export function adherence(days,todayStr,nDays=28){
   return{workout,diet,nDays,workoutPct:Math.round(workout/nDays*100),dietPct:Math.round(diet/nDays*100)};
 }
 
+// Semanas estimadas pra chegar na meta de peso no ritmo atual.
+// 0 = meta atingida; null = sem ritmo, ritmo ~zero ou direção errada.
+export function goalEta(ratePerWeek,current,target){
+  if(ratePerWeek==null||!isFinite(ratePerWeek))return null;
+  const diff=target-current;
+  if(Math.abs(diff)<=0.1)return 0;
+  if(Math.abs(ratePerWeek)<0.05)return null;
+  const weeks=diff/ratePerWeek;
+  if(weeks<0)return null; // peso andando na direção contrária
+  return Math.round(weeks);
+}
+
 // Volume de treino: últimos 7 dias vs 7 anteriores.
 export function volumeTrend(sessions,todayStr){
   const end=parseLocalDate(todayStr).getTime();

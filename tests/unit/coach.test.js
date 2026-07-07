@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { suggestNextLoad, maxLoadByDate, analyzeExercise, weightTrend, adherence, volumeTrend } from '../../src/coach.js';
+import { suggestNextLoad, maxLoadByDate, analyzeExercise, weightTrend, adherence, volumeTrend, goalEta } from '../../src/coach.js';
 
 describe('suggestNextLoad', () => {
   it('sugere ~2,5% a mais, arredondado pra 0,5 kg', () => {
@@ -138,5 +138,25 @@ describe('volumeTrend', () => {
   it('sem semana anterior → deltaPct null', () => {
     const v = volumeTrend([{ date: '2026-07-06', volume: 1000 }], '2026-07-07');
     expect(v.deltaPct).toBeNull();
+  });
+});
+
+describe('goalEta', () => {
+  it('cutting: perdendo 0,5 kg/sem, faltam 2,6 kg → ~5 semanas', () => {
+    expect(goalEta(-0.5, 80.6, 78)).toBe(5);
+  });
+  it('bulking: ganhando 0,25 kg/sem, faltam 3 kg → 12 semanas', () => {
+    expect(goalEta(0.25, 77, 80)).toBe(12);
+  });
+  it('meta já atingida → 0', () => {
+    expect(goalEta(-0.5, 78.05, 78)).toBe(0);
+  });
+  it('direção contrária → null', () => {
+    expect(goalEta(0.5, 80, 78)).toBeNull();
+    expect(goalEta(-0.5, 77, 80)).toBeNull();
+  });
+  it('ritmo ~zero ou ausente → null', () => {
+    expect(goalEta(0.01, 80, 78)).toBeNull();
+    expect(goalEta(null, 80, 78)).toBeNull();
   });
 });
