@@ -79,6 +79,24 @@ export function goalEta(ratePerWeek,current,target){
   return Math.round(weeks);
 }
 
+// Volume total por semana nas últimas nWeeks (semanas terminando hoje),
+// incluindo semanas zeradas — série pronta pro svgChart.
+export function weeklyVolumes(sessions,todayStr,nWeeks=8){
+  const end=parseLocalDate(todayStr).getTime();
+  const weeks=Array.from({length:nWeeks},()=>0);
+  (sessions||[]).forEach(s=>{
+    if(!s.date)return;
+    const d=(end-parseLocalDate(s.date).getTime())/864e5;
+    if(d<0||d>=nWeeks*7)return;
+    weeks[nWeeks-1-Math.floor(d/7)]+=num(s.volume);
+  });
+  return weeks.map((v,i)=>{
+    const start=new Date(end);start.setDate(start.getDate()-(nWeeks-1-i)*7-6);
+    const k=start.getFullYear()+'-'+String(start.getMonth()+1).padStart(2,'0')+'-'+String(start.getDate()).padStart(2,'0');
+    return{date:k,v:Math.round(v)};
+  });
+}
+
 // Volume de treino: últimos 7 dias vs 7 anteriores.
 export function volumeTrend(sessions,todayStr){
   const end=parseLocalDate(todayStr).getTime();

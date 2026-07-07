@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { suggestNextLoad, maxLoadByDate, analyzeExercise, weightTrend, adherence, volumeTrend, goalEta } from '../../src/coach.js';
+import { suggestNextLoad, maxLoadByDate, analyzeExercise, weightTrend, adherence, volumeTrend, goalEta, weeklyVolumes } from '../../src/coach.js';
 
 describe('suggestNextLoad', () => {
   it('sugere ~2,5% a mais, arredondado pra 0,5 kg', () => {
@@ -138,6 +138,32 @@ describe('volumeTrend', () => {
   it('sem semana anterior → deltaPct null', () => {
     const v = volumeTrend([{ date: '2026-07-06', volume: 1000 }], '2026-07-07');
     expect(v.deltaPct).toBeNull();
+  });
+});
+
+describe('weeklyVolumes', () => {
+  it('agrega volume por semana, incluindo semanas zeradas', () => {
+    const sessions = [
+      { date: '2026-07-06', volume: 3000 }, // semana atual (0-6 dias atrás)
+      { date: '2026-07-01', volume: 1000 }, // semana atual (6 dias atrás)
+      { date: '2026-06-25', volume: 2000 }, // 1 semana atrás (12 dias)
+      { date: '2026-05-20', volume: 5000 }  // 6 semanas atrás (48 dias)
+    ];
+    const w = weeklyVolumes(sessions, '2026-07-07', 8);
+    expect(w).toHaveLength(8);
+    expect(w[7].v).toBe(4000); // semana atual
+    expect(w[6].v).toBe(2000);
+    expect(w[1].v).toBe(5000);
+    expect(w[0].v).toBe(0);
+  });
+  it('sessões fora da janela são ignoradas', () => {
+    const w = weeklyVolumes([{ date: '2026-01-01', volume: 999 }], '2026-07-07', 8);
+    expect(w.every(x => x.v === 0)).toBe(true);
+  });
+  it('datas da série são o início de cada semana, em ordem', () => {
+    const w = weeklyVolumes([], '2026-07-07', 2);
+    expect(w[0].date).toBe('2026-06-24');
+    expect(w[1].date).toBe('2026-07-01');
   });
 });
 
