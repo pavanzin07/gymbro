@@ -1,3 +1,4 @@
+import '../style.css';
 import * as State from './state.js';
 import * as Ui from './ui.js';
 import * as Perfil from './perfil.js';
@@ -43,7 +44,7 @@ function importData(ev){
   const file=ev.target.files[0];if(!file)return;
   const rd=new FileReader();
   rd.onload=()=>{try{const d=JSON.parse(rd.result);
-    if(!d.routines||!d.meals)throw 0;
+    if(!d.routines)throw 0;
     if(!d.choices)d.choices={kcal:'b',prot:'b',fat:'b'};if(d.profile===undefined)d.profile=null;
     if(!d.progress)d.progress={weight:[],measures:[],waterGoalMl:2000,days:{}};
     if(!d.progress.waterGoalMl)d.progress.waterGoalMl=(d.progress.waterGoal||8)*250;
@@ -52,6 +53,14 @@ function importData(ev){
     if(d.activeChar==null)d.activeChar=0;
     if(!d.sessions)d.sessions=[];
     if(!d.goals)d.goals=[];
+    // Migração: meals array → mealTemplate + mealDiary (para backups antigos)
+    if(d.meals&&Array.isArray(d.meals)){
+      if(!d.mealTemplate)d.mealTemplate=d.meals;
+      if(!d.mealDiary)d.mealDiary={};
+      delete d.meals;
+    }
+    if(!d.mealTemplate)d.mealTemplate=[{id:uid(),name:'Café da manhã',foods:[]},{id:uid(),name:'Almoço',foods:[]},{id:uid(),name:'Lanche',foods:[]},{id:uid(),name:'Jantar',foods:[]}];
+    if(!d.mealDiary)d.mealDiary={};
     replaceState(d);save();renderAll();closeModal();toast('Backup importado ✅');
   }catch(e){toast('Arquivo inválido ❌')}};
   rd.readAsText(file);
@@ -59,7 +68,7 @@ function importData(ev){
 function resetAll(){
   if(!confirm('Apagar TODOS os treinos e refeições? Isso não tem volta.'))return;
   const fresh=JSON.parse(JSON.stringify(DEFAULT));
-  fresh.meals.forEach(m=>m.id=uid());
+  fresh.mealTemplate.forEach(m=>m.id=uid());
   replaceState(fresh);save();renderAll();closeModal();toast('Tudo zerado');
 }
 
