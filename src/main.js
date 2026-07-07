@@ -84,11 +84,15 @@ Object.assign(window,State,Ui,Perfil,Treino,Dieta,Progresso,Conquistas,Personage
 /* ============ INIT ============ */
 renderAll();
 Sync.initSync({onRemoteState:renderAll});
+// Atalhos do PWA (manifest shortcuts): ?tab=treino abre direto na aba
+const tabParam=new URLSearchParams(location.search).get('tab');
+if(tabParam&&document.getElementById('view-'+tabParam))Ui.go(tabParam);
 
 /* ============ PWA / SERVICE WORKER ============ */
 // Só registra em produção — em dev o cache-first serviria módulos antigos.
+// Caminho relativo: funciona na raiz e em subdiretório (ex: GitHub Pages).
 if('serviceWorker' in navigator&&import.meta.env.PROD){
-  navigator.serviceWorker.register('/sw.js').catch(e=>{
+  navigator.serviceWorker.register('./sw.js').catch(e=>{
     console.log('SW registration failed (dev or offline):',e.message);
   });
 }

@@ -1,0 +1,5 @@
+# Alternativa ao GitHub Pages: conecte o repositório no https://app.netlify.com
+# (ou arraste a pasta dist/ no Netlify Drop). Config detectada automaticamente.
+[build]
+  command = "npm run build"
+  publish = "dist"
