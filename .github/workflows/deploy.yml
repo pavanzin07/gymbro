@@ -21,9 +21,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-      - run: npm ci
+      # npm install (não ci): o npm do CI auto-instala peers do vite 7 que
+      # versões mais novas tratam como opcionais — o lockfile não bate entre elas
+      - run: npm install --no-audit --no-fund
       - run: npm run build
         env:
           # Opcional: configure estes secrets no repositório pra ativar o cloud sync
