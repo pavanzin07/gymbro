@@ -12,7 +12,7 @@ const {showModal,closeModal,toast}=Ui;
 const {renderPerfil}=Perfil;
 const {renderRoutines,startRestTimer}=Treino;
 const {renderDieta,switchMealDate,copyMealTemplate}=Dieta;
-const {renderProgresso}=Progresso;
+const {renderProgresso,checkDietaAuto}=Progresso;
 const {renderRecords}=Conquistas;
 const {renderPersonagem}=Personagem;
 

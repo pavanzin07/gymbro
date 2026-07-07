@@ -34,6 +34,8 @@ export function renderDieta(){
   const isToday=_mealViewDate===today();
   const sub=document.getElementById('dieta-sub');
   if(!sub)return;
+  // Auto-check dieta completion only on today's view
+  if(isToday&&window.checkDietaAuto)window.checkDietaAuto();
   sub.textContent=`${R(t.kcal)} / ${g.kcal} kcal ${isToday?'hoje':dShort(_mealViewDate)}`;
   const barRow=(lbl,cls,val,goal,unit,color)=>{
     const pct=goal>0?Math.min(100,Math.round(val/goal*100)):0;

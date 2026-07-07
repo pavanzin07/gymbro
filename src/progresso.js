@@ -1,7 +1,7 @@
 import {S,save,num,esc} from './state.js';
 import {toast,showModal,closeModal,svgChart,today,dShort,parseLocalDate} from './ui.js';
 import {chipRow,chipVal,applyChoices,renderPerfil} from './perfil.js';
-import {renderDieta} from './dieta.js';
+import {renderDieta,dayTotals} from './dieta.js';
 import {MET,INTENS} from './data/atividades.js';
 import {renderPersonagem} from './personagem.js';
 
@@ -163,6 +163,18 @@ export function renderProgresso(){
 }
 export function selMeas(k){measSel=k;renderProgresso();}
 export function setWaterMl(ml){const t=today();if(!S.progress.days[t])S.progress.days[t]={};S.progress.days[t].waterMl=Math.max(0,ml);save();renderProgresso();renderPersonagem();}
+export function checkDietaAuto(){
+  const t=today(),td=S.progress.days[t]||{};
+  if(td.diet)return; // já marcada manualmente
+  const dt=dayTotals(t),g=S.targets;
+  const kcalOk=Math.abs(dt.kcal-g.kcal)<=g.kcal*0.1;
+  const protOk=Math.abs(dt.prot-g.prot)<=g.prot*0.1;
+  if(kcalOk&&protOk){
+    if(!S.progress.days[t])S.progress.days[t]={};
+    S.progress.days[t].diet=true;save();renderProgresso();renderPersonagem();
+    toast('✅ Dieta em dia! Metas atingidas +8 🪙 +30 XP');
+  }
+}
 export function toggleHabit(h){const t=today();if(!S.progress.days[t])S.progress.days[t]={};S.progress.days[t][h]=!S.progress.days[t][h];save();renderProgresso();renderPersonagem();
   if(S.progress.days[t][h])toast(h==='workout'?'Treino concluído! +10 🪙 +50 XP 💪':h==='diet'?'Dieta em dia! +8 🪙 +30 XP ✅':'Alongamento marcado 🧘 +2 🪙');}
 export function editWaterGoal(){
