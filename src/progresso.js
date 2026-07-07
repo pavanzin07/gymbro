@@ -183,7 +183,13 @@ export function editWaterGoal(){
     <div class="field"><label>Meta (ml)</label><input id="wg" type="number" inputmode="numeric" step="100" value="${S.progress.waterGoalMl||2000}"></div>
     ${sug?`<p class="hint">Indicação comum: ~35 ml por kg → pro seu peso, cerca de <b>${sug} ml</b>. <a href="#" style="color:var(--acc)" onclick="document.getElementById('wg').value=${sug};return false">usar ${sug} ml</a></p>`:'<p class="hint">Indicação comum: ~35 ml por kg de peso corporal.</p>'}
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-    <button class="btn btn-acc" onclick="(function(){var v=Math.max(200,parseInt(document.getElementById('wg').value)||2000);S.progress.waterGoalMl=v;save();renderProgresso();closeModal();toast('Meta: '+v+' ml')})()">Salvar</button></div>`);
+    <button class="btn btn-acc" onclick="saveWaterGoal()">Salvar</button></div>`);
+}
+export function saveWaterGoal(){
+  const v=Math.max(200,parseInt(document.getElementById('wg').value)||2000);
+  S.progress.waterGoalMl=v;
+  save();renderProgresso();closeModal();
+  toast('Meta: '+v+' ml');
 }
 export function openWeight(){
   showModal(`<h3>Registrar peso</h3><p class="sub">Atualiza seu perfil e recalcula as metas.</p>

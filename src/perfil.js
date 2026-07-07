@@ -81,8 +81,16 @@ export function openCustomKcal(){
       <input id="ck" type="number" inputmode="numeric" step="10" placeholder="${m?m.tdee:'2500'}" value="${S.choices.kcalCustom||''}"></div>
     <p class="hint">Proteína e gordura seguem suas escolhas; o carboidrato preenche o resto.</p>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-    <button class="btn btn-acc" onclick="(function(){var v=Math.round(num(document.getElementById('ck').value));if(!v){toast('Digite um valor');return}S.choices.kcal='custom';S.choices.kcalCustom=v;applyChoices();renderPerfil();renderDieta();closeModal();toast('Meta personalizada: '+v+' kcal ✅')})()">Salvar</button></div>`);
+    <button class="btn btn-acc" onclick="saveCustomKcal()">Salvar</button></div>`);
   setTimeout(()=>document.getElementById('ck').focus(),100);
+}
+export function saveCustomKcal(){
+  const v=Math.round(num(document.getElementById('ck').value));
+  if(!v){toast('Digite um valor');return;}
+  S.choices.kcal='custom';
+  S.choices.kcalCustom=v;
+  applyChoices();renderPerfil();renderDieta();closeModal();
+  toast('Meta personalizada: '+v+' kcal ✅');
 }
 export function openCustomMacro(type){
   const isP=type==='prot';const cur=isP?S.choices.protCustom:S.choices.fatCustom;
