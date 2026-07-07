@@ -1,0 +1,155 @@
+import {S,save,replaceState,lastSavedAt,esc} from './state.js';
+import {toast,showModal,closeModal} from './ui.js';
+
+/* ============ SINCRONIZAÇÃO (Supabase) ============
+   Offline-first: o localStorage continua sendo a fonte da verdade.
+   Sem VITE_SUPABASE_URL/KEY este módulo fica inerte e o app funciona
+   100% offline como sempre. Com config: login por e-mail/senha,
+   pull+merge no login e push (debounce 3s) após cada save(). */
+
+const SB_URL=import.meta.env.VITE_SUPABASE_URL;
+const SB_KEY=import.meta.env.VITE_SUPABASE_ANON_KEY;
+let sb=null;         // cliente supabase (carregado sob demanda)
+let user=null;       // usuário logado
+let pushT=null;      // debounce do push
+let lastSync=null;   // timestamp da última sincronização ok
+let onRemote=null;   // callback pra re-renderizar após aplicar estado remoto
+let syncing=false;
+
+export const syncConfigured=()=>!!(SB_URL&&SB_KEY);
+export const syncUser=()=>user;
+
+export async function initSync(opts={}){
+  onRemote=opts.onRemoteState||null;
+  if(!syncConfigured())return;
+  const {createClient}=await import('@supabase/supabase-js');
+  sb=createClient(SB_URL,SB_KEY);
+  const {data}=await sb.auth.getSession();
+  user=data&&data.session?data.session.user:null;
+  sb.auth.onAuthStateChange((_ev,session)=>{user=session?session.user:null;});
+  window.addEventListener('gymbro:saved',schedulePush);
+  if(user)syncNow(true);
+}
+
+/* ---- merge: o blob mais novo ganha; o mais antigo preenche buracos ----
+   Dias de check-in, diário alimentar, sessões e pesos que só existem no
+   lado antigo são preservados (união por data). Pura, testável. */
+export function mergeStates(a,aTs,b,bTs){
+  const [base,other]=aTs>=bTs?[a,b]:[b,a];
+  const m=JSON.parse(JSON.stringify(base));
+  if(!other)return m;
+  if(other.progress&&other.progress.days){
+    if(!m.progress)m.progress={weight:[],measures:[],waterGoalMl:2000,days:{}};
+    if(!m.progress.days)m.progress.days={};
+    for(const d in other.progress.days)if(!m.progress.days[d])m.progress.days[d]=JSON.parse(JSON.stringify(other.progress.days[d]));
+  }
+  if(other.mealDiary){
+    if(!m.mealDiary)m.mealDiary={};
+    for(const d in other.mealDiary)if(!m.mealDiary[d])m.mealDiary[d]=JSON.parse(JSON.stringify(other.mealDiary[d]));
+  }
+  if(Array.isArray(other.sessions)){
+    if(!Array.isArray(m.sessions))m.sessions=[];
+    const seen=new Set(m.sessions.map(s=>(s.date||'')+'|'+(s.routineId||'')));
+    other.sessions.forEach(s=>{const k=(s.date||'')+'|'+(s.routineId||'');if(!seen.has(k)){m.sessions.push(JSON.parse(JSON.stringify(s)));seen.add(k);}});
+    m.sessions.sort((x,y)=>(x.date||'').localeCompare(y.date||''));
+  }
+  if(other.progress&&Array.isArray(other.progress.weight)&&m.progress){
+    if(!Array.isArray(m.progress.weight))m.progress.weight=[];
+    const wd=new Set(m.progress.weight.map(w=>w.date));
+    other.progress.weight.forEach(w=>{if(!wd.has(w.date)){m.progress.weight.push(JSON.parse(JSON.stringify(w)));wd.add(w.date);}});
+    m.progress.weight.sort((x,y)=>(x.date||'').localeCompare(y.date||''));
+  }
+  return m;
+}
+
+/* ---- pull + merge + push ---- */
+export async function syncNow(silent){
+  if(!sb||!user||syncing)return;
+  syncing=true;
+  try{
+    const {data,error}=await sb.from('gym_states').select('state,updated_at').eq('user_id',user.id).maybeSingle();
+    if(error)throw error;
+    if(data&&data.state){
+      const remoteTs=new Date(data.updated_at).getTime();
+      const merged=mergeStates(S,lastSavedAt(),data.state,remoteTs);
+      replaceState(merged);save();
+      if(onRemote)onRemote();
+    }
+    await pushNow();
+    lastSync=Date.now();
+    if(!silent)toast('Sincronizado ☁️');
+  }catch(e){
+    console.log('sync error:',e.message);
+    if(!silent)toast('Erro ao sincronizar ❌');
+  }finally{syncing=false;}
+}
+async function pushNow(){
+  if(!sb||!user)return;
+  const {error}=await sb.from('gym_states').upsert({user_id:user.id,state:S,updated_at:new Date().toISOString()});
+  if(error)throw error;
+}
+function schedulePush(){
+  if(!sb||!user)return;
+  clearTimeout(pushT);
+  pushT=setTimeout(()=>{pushNow().then(()=>{lastSync=Date.now();}).catch(e=>console.log('push error:',e.message));},3000);
+}
+
+/* ---- auth ---- */
+export async function syncSignIn(){
+  const email=document.getElementById('sy-email').value.trim();
+  const pass=document.getElementById('sy-pass').value;
+  if(!email||!pass){toast('Preencha e-mail e senha');return;}
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){toast(error.message.includes('Invalid')?'E-mail ou senha incorretos ❌':'Erro: '+error.message);return;}
+  toast('Bem-vindo de volta! ☁️');
+  closeModal();
+  await syncNow(true);
+}
+export async function syncSignUp(){
+  const email=document.getElementById('sy-email').value.trim();
+  const pass=document.getElementById('sy-pass').value;
+  if(!email||!pass){toast('Preencha e-mail e senha');return;}
+  if(pass.length<6){toast('Senha precisa de 6+ caracteres');return;}
+  const {data,error}=await sb.auth.signUp({email,password:pass});
+  if(error){toast('Erro: '+error.message);return;}
+  if(data.user&&!data.session){toast('Confira seu e-mail pra confirmar a conta 📧');closeModal();return;}
+  toast('Conta criada! ☁️');
+  closeModal();
+  await syncNow(true);
+}
+export async function syncSignOut(){
+  await sb.auth.signOut();
+  user=null;
+  toast('Desconectado. Seus dados continuam neste aparelho.');
+  openSyncModal();
+}
+
+/* ---- UI ---- */
+export function openSyncModal(){
+  if(!syncConfigured()){
+    showModal(`<h3>☁️ Sincronização</h3>
+      <p class="sub">Guarde seus dados na nuvem e use em vários aparelhos.</p>
+      <div class="why">A sincronização ainda não foi configurada neste app. O passo a passo (grátis, ~5 min) está no arquivo <b>SETUP-SYNC.md</b> do projeto. Enquanto isso, tudo continua salvo neste navegador — nada se perde.</div>
+      <div class="modal-actions"><button class="btn btn-acc" onclick="closeModal()" style="flex:1;justify-content:center">Entendi</button></div>`);
+    return;
+  }
+  if(user){
+    const t=lastSync?new Date(lastSync).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
+    showModal(`<h3>☁️ Sincronização</h3>
+      <p class="sub">Conectado como <b>${esc(user.email||'')}</b></p>
+      <div class="why">Seus dados sincronizam sozinhos alguns segundos após cada mudança. Última sincronização: <b>${t}</b>.</div>
+      <button class="btn btn-acc" style="width:100%;justify-content:center;margin:10px 0" onclick="syncNow(false)">🔄 Sincronizar agora</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="syncSignOut()">Sair da conta</button>
+      <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()" style="flex:1;justify-content:center">Fechar</button></div>`);
+    return;
+  }
+  showModal(`<h3>☁️ Entrar ou criar conta</h3>
+    <p class="sub">Seus dados locais serão mesclados com a nuvem.</p>
+    <div class="field"><label>E-mail</label><input id="sy-email" type="email" inputmode="email" placeholder="voce@email.com"></div>
+    <div class="field"><label>Senha</label><input id="sy-pass" type="password" placeholder="6+ caracteres"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="syncSignUp()" style="flex:1;justify-content:center">Criar conta</button>
+      <button class="btn btn-acc" onclick="syncSignIn()" style="flex:1;justify-content:center">Entrar</button>
+    </div>`);
+  setTimeout(()=>{const el=document.getElementById('sy-email');if(el)el.focus();},100);
+}

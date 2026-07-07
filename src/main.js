@@ -7,6 +7,7 @@ import * as Dieta from './dieta.js';
 import * as Progresso from './progresso.js';
 import * as Conquistas from './conquistas.js';
 import * as Personagem from './personagem.js';
+import * as Sync from './sync.js';
 
 const {S,save,DEFAULT,uid,replaceState}=State;
 const {showModal,closeModal,toast}=Ui;
@@ -22,6 +23,7 @@ function openMenu(){
   showModal(`
     <h3>Opções</h3>
     <p class="sub">Seus dados ficam salvos neste navegador.</p>
+    <button class="btn btn-ghost" style="width:100%;justify-content:flex-start;margin-bottom:10px" onclick="openSyncModal()">☁️ Conta &amp; Sincronização</button>
     <button class="btn btn-ghost" style="width:100%;justify-content:flex-start;margin-bottom:10px" onclick="exportData()">⬇️ Exportar backup (.json)</button>
     <label class="btn btn-ghost" style="width:100%;justify-content:flex-start;margin-bottom:10px;cursor:pointer">
       ⬆️ Importar backup
@@ -75,12 +77,13 @@ function resetAll(){
 /* ============ EXPOSIÇÃO GLOBAL ============ */
 // Templates HTML gerados dinamicamente usam onclick="funcao(...)" — igual ao
 // script único original, essas funções precisam existir no escopo global.
-Object.assign(window,State,Ui,Perfil,Treino,Dieta,Progresso,Conquistas,Personagem,{
+Object.assign(window,State,Ui,Perfil,Treino,Dieta,Progresso,Conquistas,Personagem,Sync,{
   openMenu,exportData,importData,resetAll
 });
 
 /* ============ INIT ============ */
 renderAll();
+Sync.initSync({onRemoteState:renderAll});
 
 /* ============ PWA / SERVICE WORKER ============ */
 // Só registra em produção — em dev o cache-first serviria módulos antigos.

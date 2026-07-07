@@ -54,7 +54,12 @@ export function load(){
   return JSON.parse(JSON.stringify(DEFAULT));
 }
 export let S=load();
-export function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+export function save(){
+  localStorage.setItem(KEY,JSON.stringify(S));
+  localStorage.setItem(KEY+'_ts',String(Date.now()));
+  if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('gymbro:saved'));
+}
+export function lastSavedAt(){return parseInt(localStorage.getItem(KEY+'_ts'))||0}
 export function replaceState(newObj){
   Object.keys(S).forEach(k=>delete S[k]);
   Object.assign(S,newObj);
