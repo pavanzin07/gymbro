@@ -14,7 +14,13 @@ function baseState(overrides = {}) {
     activeChar: 0,
     wallet: { owned: ['short_black'], spent: 0 },
     routines: [],
-    meals: [],
+    mealTemplate: [
+      { id: 'm1', name: 'Café da manhã', foods: [] },
+      { id: 'm2', name: 'Almoço', foods: [] },
+      { id: 'm3', name: 'Lanche', foods: [] },
+      { id: 'm4', name: 'Jantar', foods: [] }
+    ],
+    mealDiary: {},
     targets: { kcal: 2200, prot: 160, carb: 230, fat: 70 },
     ...overrides
   };
@@ -42,11 +48,12 @@ describe('mealTotals / dayTotals', () => {
   });
 
   it('soma os totais de todas as refeições do dia', () => {
-    S.meals = [
+    const today = new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0');
+    S.mealDiary[today] = [
       { id: '1', name: 'Café', foods: [{ kcal: '100', prot: '10', carb: '5', fat: '2' }] },
       { id: '2', name: 'Almoço', foods: [{ kcal: '200', prot: '20', carb: '10', fat: '4' }] }
     ];
-    const t = dayTotals();
+    const t = dayTotals(today);
     expect(t.kcal).toBe(300);
     expect(t.prot).toBe(30);
     expect(t.carb).toBe(15);
