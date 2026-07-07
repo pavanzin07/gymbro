@@ -20,12 +20,17 @@ export function showModal(html){
   document.getElementById('modal-bg').classList.add('show');
 }
 export function closeModal(){document.getElementById('modal-bg').classList.remove('show')}
-document.getElementById('modal-bg').addEventListener('click',e=>{if(e.target.id==='modal-bg')closeModal()});
+const modalBg=document.getElementById('modal-bg');
+if(modalBg)modalBg.addEventListener('click',e=>{if(e.target.id==='modal-bg')closeModal()});
 
 /* ============ DATAS (utilitário compartilhado) ============ */
 export function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 export function dShort(s){const p=s.split('-');return p[2]+'/'+p[1];}
 export function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/864e5);}
+// new Date('YYYY-MM-DD') é interpretado como UTC pelo motor JS; em fusos negativos
+// (ex: America/Sao_Paulo, UTC-3) isso volta um dia ao ler com getDate()/getMonth() locais.
+// Use este parser sempre que for navegar dia a dia a partir de uma data local do app.
+export function parseLocalDate(s){const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
 
 /* ============ GRÁFICO SVG ============ */
 export function svgChart(series,color,id){

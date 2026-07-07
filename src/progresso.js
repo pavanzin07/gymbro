@@ -1,5 +1,5 @@
 import {S,save,num,esc} from './state.js';
-import {toast,showModal,closeModal,svgChart,today,dShort} from './ui.js';
+import {toast,showModal,closeModal,svgChart,today,dShort,parseLocalDate} from './ui.js';
 import {chipRow,chipVal,applyChoices,renderPerfil} from './perfil.js';
 import {renderDieta} from './dieta.js';
 import {MET,INTENS} from './data/atividades.js';
@@ -13,7 +13,7 @@ export const MEASURES=[
 let measSel='braco';
 
 export function computeStreak(pred){
-  const days=S.progress.days;let d=new Date(today());
+  const days=S.progress.days;let d=parseLocalDate(today());
   // se hoje não bateu, começa de ontem
   const key=dt=>dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
   if(!(days[key(d)]&&pred(days[key(d)])))d.setDate(d.getDate()-1);
@@ -65,7 +65,7 @@ export function renderProgresso(){
   let cups='';for(let i=0;i<cupsTotal;i++)cups+=`<div class="cup ${i<cupsNow?'on':''}" onclick="setWaterMl(${(i+1)*CUP})"></div>`;
 
   // histórico últimos 21 dias
-  let hist='';for(let i=20;i>=0;i--){const dt=new Date(t);dt.setDate(dt.getDate()-i);
+  let hist='';for(let i=20;i>=0;i--){const dt=parseLocalDate(t);dt.setDate(dt.getDate()-i);
     const k=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
     const dd=P.days[k]||{};const cls=dd.workout&&dd.diet?'wd':dd.workout?'w':dd.diet?'d':'';
     hist+=`<div class="hdot ${cls}" title="${k}"></div>`;}

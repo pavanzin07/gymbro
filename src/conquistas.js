@@ -58,13 +58,14 @@ export function delExEntry(name,date,load,reps){
   toast('Registro removido');
 }
 const escAttr=s=>(s||'').replace(/'/g,"\\'");
+export function estimate1RM(load,reps){return reps?Math.round(load*(1+reps/30)):null;}
 export function exerciseDetail(name){
   const entries=exerciseEntries(name);
   if(!entries.length){toast('Sem registros ainda');return;}
   const musc=exMusc(name);
   const pr=entries.reduce((m,e)=>e.load>m.load?e:m,entries[0]);
   const first=entries[0],last=entries[entries.length-1];
-  const e1rm=pr.reps?Math.round(pr.load*(1+pr.reps/30)):null;
+  const e1rm=estimate1RM(pr.load,pr.reps);
   const diff=+(last.load-first.load).toFixed(1);
   const chart=svgChart(entries.map(e=>({date:e.date,v:e.load})),'#ff9f43','det');
   showModal(`<h3>${esc(name)}</h3><p class="sub">${esc(musc)} · ${entries.length} registro${entries.length>1?'s':''} de carga</p>
@@ -75,7 +76,7 @@ export function exerciseDetail(name){
     </div>
     ${chart?`<div class="chart-wrap">${chart}</div>`:'<div class="hint">Registre em pelo menos 2 dias pra ver o gráfico de progressão.</div>'}
     <div style="font-size:12px;color:var(--mut);font-weight:700;text-transform:uppercase;margin:14px 0 8px">Todos os registros</div>
-    ${[...entries].reverse().map(e=>{const est=e.reps?Math.round(e.load*(1+e.reps/30)):null;const isPR=e.load===pr.load;return `<div class="row">
+    ${[...entries].reverse().map(e=>{const est=estimate1RM(e.load,e.reps);const isPR=e.load===pr.load;return `<div class="row">
       <div class="name"><b>${e.load} kg × ${e.reps||'–'}</b><span>${dShort(e.date)}${est?' · 1RM ~'+est+'kg':''}${isPR?' · 🏆':''}</span></div>
       <div class="row-actions"><button class="mini del" onclick="delExEntry('${escAttr(name)}','${e.date}',${e.load},${e.reps})">🗑</button></div>
     </div>`;}).join('')}
@@ -120,7 +121,7 @@ export function renderRecords(){
   items.forEach(it=>{it.hist.sort((a,b)=>a.date.localeCompare(b.date));it.pr=it.hist.reduce((m,h)=>num(h.load)>num(m.load)?h:m);});
   items.sort((a,b)=>a.musc.localeCompare(b.musc)||num(b.pr.load)-num(a.pr.load));
   const recHTML=`<div style="font-size:12px;color:var(--mut);font-weight:700;text-transform:uppercase;margin:6px 4px 10px">🏆 Recordes por exercício</div>`+(items.length?items.map((it,i)=>{
-    const e1rm=it.pr.reps?Math.round(num(it.pr.load)*(1+it.pr.reps/30)):null;
+    const e1rm=estimate1RM(num(it.pr.load),it.pr.reps);
     const chart=svgChart(it.hist.map(h=>({date:h.date,v:num(h.load)})),'#ff9f43','r'+i);
     return `<div class="card" style="cursor:pointer" onclick="exerciseDetail('${escAttr(it.name)}')">
       <div class="routine-head"><div class="tag" style="background:linear-gradient(135deg,#ff9f43,#ff7a1a)">🏆</div>
