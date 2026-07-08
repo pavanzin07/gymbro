@@ -8,6 +8,7 @@ import * as Progresso from './progresso.js';
 import * as Conquistas from './conquistas.js';
 import * as Personagem from './personagem.js';
 import * as Sync from './sync.js';
+import * as Gerador from './gerador.js';
 
 const {S,save,DEFAULT,uid,replaceState}=State;
 const {showModal,closeModal,toast}=Ui;
@@ -77,7 +78,7 @@ function resetAll(){
 /* ============ EXPOSIÇÃO GLOBAL ============ */
 // Templates HTML gerados dinamicamente usam onclick="funcao(...)" — igual ao
 // script único original, essas funções precisam existir no escopo global.
-Object.assign(window,State,Ui,Perfil,Treino,Dieta,Progresso,Conquistas,Personagem,Sync,{
+Object.assign(window,State,Ui,Perfil,Treino,Dieta,Progresso,Conquistas,Personagem,Sync,Gerador,{
   openMenu,exportData,importData,resetAll
 });
 

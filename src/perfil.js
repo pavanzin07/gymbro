@@ -334,5 +334,5 @@ export function saveProfile(){
     lifestyle:chipVal('life')||'lev',
     restrictions:Array.from(document.querySelectorAll('.restr.on')).map(b=>b.getAttribute('data-k'))
   };
-  applyChoices();renderPerfil();renderDieta();closeModal();toast('Perfil salvo! Veja suas sugestões 👇');
+  applyChoices();renderPerfil();renderDieta();renderRoutines();closeModal();toast('Perfil salvo! Veja suas sugestões 👇');
 }

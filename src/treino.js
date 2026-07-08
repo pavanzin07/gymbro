@@ -32,17 +32,23 @@ export function renderRoutines(){
   if(!box)return;
   if(!S.routines.length){
     if(S.profile){
-      sub.textContent='Comece escolhendo uma divisão';
-      box.innerHTML=`<div class="card">
-        <b style="font-size:15px">💡 Sugestões de divisão pro seu perfil</b>
-        <div style="color:var(--mut);font-size:12.5px;margin:4px 0 14px">Não sabe como dividir o treino? Escolha uma opção abaixo — a gente cria a estrutura com o que cada dia treina, e você preenche os exercícios (com sugestões prontas).</div>
+      sub.textContent='Seu treino em 3 toques';
+      box.innerHTML=`<div class="card" style="text-align:center">
+        <div style="font-size:34px;margin-bottom:4px">🧬</div>
+        <b style="font-size:15.5px">Montamos seu treino pra você</b>
+        <div style="color:var(--mut);font-size:12.5px;margin:6px 0 12px">Programa completo — exercícios, séries, repetições e descanso — baseado em estudos do PubMed e no seu perfil. Você só confirma 3 escolhas.</div>
+        <button class="btn btn-acc" style="width:100%;justify-content:center" onclick="openGeradorWizard()">🧬 Montar meu treino</button>
+      </div>
+      <div class="card">
+        <b style="font-size:15px">💡 Ou escolha só a divisão</b>
+        <div style="color:var(--mut);font-size:12.5px;margin:4px 0 14px">A gente cria a estrutura e você preenche os exercícios com as sugestões.</div>
         ${splitCardsHTML()}
       </div>
       <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="openRoutine()">＋ Ou criar um treino do zero</button>`;
     }else{
       sub.textContent='Monte suas rotinas';
       box.innerHTML=`<div class="empty"><div class="big">🏋️</div>
-        <p>Pra te sugerir a melhor divisão (peito/tríceps, pull, perna...),<br>preencha seu perfil primeiro.</p>
+        <p>Pra montar o treino ideal pra você (divisão, exercícios, séries...),<br>preencha seu perfil primeiro.</p>
         <button class="btn btn-acc" style="margin:0 auto 10px" onclick="go('perfil')">Preencher perfil</button>
         <button class="btn btn-ghost" style="margin:0 auto" onclick="openRoutine()">Criar treino do zero</button></div>`;
     }
@@ -83,7 +89,10 @@ export function renderRoutines(){
       </div>
     </div>`;
   }).join('')
-  + `<button class="btn btn-acc" style="width:100%;justify-content:center;margin-top:4px" onclick="reviewWorkout()">🔍 Pedir revisão do treino</button>`
+  + `<div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-acc" style="flex:1;justify-content:center" onclick="reviewWorkout()">🔍 Revisão do treino</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="openGeradorWizard()">🧬 Gerar novo</button>
+    </div>`
   + sessionHistoryHTML();
 }
 
