@@ -12,11 +12,13 @@ test('onboarding completo: perfil → treino gerado → dieta gerada → persona
   await page.locator('[data-g="life"][data-k="lev"]').click();
   await page.locator('.modal-actions button:has-text("Salvar perfil")').click();
 
-  // 2. esteira emenda no gerador de treino
+  // 2. esteira emenda nos treinos prontos (perfil iniciante → "Meu primeiro treino" recomendado)
   await expect(page.locator('#modal')).toContainText('Perfil pronto');
-  await page.locator('#modal button:has-text("🧬 Montar meu treino")').click();
-  await expect(page.locator('#modal')).toContainText('Já deixei tudo marcado');
-  await page.locator('#modal button:has-text("🧬 Gerar meu treino")').click();
+  await page.locator('#modal button:has-text("🧬 Escolher meu treino")').click();
+  await expect(page.locator('#modal')).toContainText('Escolha seu treino');
+  await expect(page.locator('#modal')).toContainText('pra você');
+  await page.locator('#modal button:has-text("Meu primeiro treino")').click();
+  await expect(page.locator('#modal h3')).toContainText('Seu programa');
   await page.locator('#modal button:has-text("✅ Usar este treino")').click();
 
   // 3. esteira emenda na dieta

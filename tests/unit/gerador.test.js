@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { gerarPrograma, FOCOS, VOLUMES, SPLITS } from '../../src/gerador.js';
 import { EVID } from '../../src/data/evidencia.js';
-import { EXLIB } from '../../src/data/exercicios.js';
+import { EXLIB, exDica } from '../../src/data/exercicios.js';
+import { PROGRAMAS, recomendadoPronto } from '../../src/data/programas.js';
 
 describe('gerarPrograma — estrutura do split', () => {
   it('2 dias → 2 rotinas Full Body', () => {
@@ -82,7 +83,8 @@ describe('gerarPrograma — qualidade dos dias', () => {
     const todos = Object.values(EXLIB).flat().map(e => e.n);
     gerarPrograma({ dias: 5 }).routines.forEach(r => r.exercises.forEach(e => {
       expect(todos).toContain(e.name);
-      expect(e).toMatchObject({ load: '', note: '', history: [] });
+      expect(e).toMatchObject({ load: '', history: [] });
+      expect(typeof e.note).toBe('string');
       expect(e.id).toBeTruthy();
     }));
   });
@@ -91,6 +93,36 @@ describe('gerarPrograma — qualidade dos dias', () => {
     const pernasA = p.routines[0].exercises.find(e => e.musc === 'Pernas').name;
     const pernasB = p.routines[1].exercises.find(e => e.musc === 'Pernas').name;
     expect(pernasA).not.toBe(pernasB);
+  });
+});
+
+describe('treinos prontos', () => {
+  it('todos os presets geram programa válido com o nº certo de dias', () => {
+    PROGRAMAS.forEach(p => {
+      const g = gerarPrograma(p.cfg);
+      expect(g.routines).toHaveLength(p.cfg.dias);
+      expect(g.routines.every(r => r.exercises.length >= 3)).toBe(true);
+    });
+  });
+  it('recomendação por perfil cobre todos os casos', () => {
+    expect(recomendadoPronto({ level: 'ini', goal: 'massa' })).toBe('primeiro');
+    expect(recomendadoPronto({ level: 'int', goal: 'forca' })).toBe('forca');
+    expect(recomendadoPronto({ level: 'int', goal: 'perder' })).toBe('definir');
+    expect(recomendadoPronto({ level: 'avc', goal: 'massa' })).toBe('ppl');
+    expect(recomendadoPronto({ level: 'int', goal: 'massa' })).toBe('massa');
+    expect(recomendadoPronto(null)).toBe('massa');
+  });
+  it('toda a biblioteca tem dica de execução pra iniciante', () => {
+    Object.values(EXLIB).flat().forEach(e => {
+      expect(e.d, e.n + ' sem dica').toBeTruthy();
+      expect(e.d.length).toBeGreaterThan(15);
+    });
+  });
+  it('exercícios gerados carregam a dica como nota (visível na rotina)', () => {
+    gerarPrograma({ dias: 2 }).routines.forEach(r => r.exercises.forEach(ex => {
+      expect(ex.note).toBe(exDica(ex.name));
+      expect(ex.note.length).toBeGreaterThan(15);
+    }));
   });
 });
 

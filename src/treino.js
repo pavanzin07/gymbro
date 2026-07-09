@@ -1,8 +1,8 @@
 import {S,save,uid,esc,num} from './state.js';
 import {toast,showModal,closeModal,svgChart,today,dShort,inp} from './ui.js';
 import {analyzeExercise} from './coach.js';
-import {splitCardsHTML} from './perfil.js';
-import {EXLIB,GRP_SYN} from './data/exercicios.js';
+import {EXLIB,GRP_SYN,exDica} from './data/exercicios.js';
+import {prontoCardsHTML} from './gerador.js';
 import {renderRecords} from './conquistas.js';
 import {renderPersonagem} from './personagem.js';
 import {renderProgresso} from './progresso.js';
@@ -32,19 +32,16 @@ export function renderRoutines(){
   if(!box)return;
   if(!S.routines.length){
     if(S.profile){
-      sub.textContent='Seu treino em 3 toques';
-      box.innerHTML=`<div class="card" style="text-align:center">
-        <div style="font-size:34px;margin-bottom:4px">🧬</div>
-        <b style="font-size:15.5px">Montamos seu treino pra você</b>
-        <div style="color:var(--mut);font-size:12.5px;margin:6px 0 12px">Programa completo — exercícios, séries, repetições e descanso — baseado em estudos do PubMed e no seu perfil. Você só confirma 3 escolhas.</div>
-        <button class="btn btn-acc" style="width:100%;justify-content:center" onclick="openGeradorWizard()">🧬 Montar meu treino</button>
+      sub.textContent='Escolha um treino pronto';
+      box.innerHTML=`<div class="card">
+        <b style="font-size:15px">🧬 Treinos prontos pra você</b>
+        <div style="color:var(--mut);font-size:12.5px;margin:4px 0 6px">Todos baseados em estudos do PubMed, com instrução em cada exercício. Toque num, veja como fica e use — dá pra editar tudo depois.</div>
+        ${prontoCardsHTML()}
       </div>
-      <div class="card">
-        <b style="font-size:15px">💡 Ou escolha só a divisão</b>
-        <div style="color:var(--mut);font-size:12.5px;margin:4px 0 14px">A gente cria a estrutura e você preenche os exercícios com as sugestões.</div>
-        ${splitCardsHTML()}
-      </div>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="openRoutine()">＋ Ou criar um treino do zero</button>`;
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="openGeradorWizard()">⚙️ Montar sob medida</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="openRoutine()">✏️ Criar do zero</button>
+      </div>`;
     }else{
       sub.textContent='Monte suas rotinas';
       box.innerHTML=`<div class="empty"><div class="big">🏋️</div>
@@ -91,7 +88,7 @@ export function renderRoutines(){
   }).join('')
   + `<div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn btn-acc" style="flex:1;justify-content:center" onclick="reviewWorkout()">🔍 Revisão do treino</button>
-      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="openGeradorWizard()">🧬 Gerar novo</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="openTreinosProntos()">🧬 Gerar novo</button>
     </div>`
   + sessionHistoryHTML();
 }
@@ -190,7 +187,9 @@ export function exPR(ex){if(!ex||!ex.history||!ex.history.length)return null;ret
 export function logSet(rid,eid){
   const r=S.routines.find(x=>x.id===rid);const ex=r.exercises.find(x=>x.id===eid);
   const defReps=(ex.reps||'').match(/\d+/);
+  const dica=exDica(ex.name);
   showModal(`<h3>Registrar carga</h3><p class="sub">${esc(ex.name)} · ${esc(r.name)}</p>
+    ${dica?`<div class="why" style="margin-bottom:10px">💡 <b>Como fazer:</b> ${esc(dica)}</div>`:''}
     <div class="field"><label>Data</label><input id="ls-date" type="date" value="${today()}"></div>
     <div class="grid2">
       <div class="field"><label>Carga (kg)</label><input id="ls-load" type="number" inputmode="decimal" step="0.5" placeholder="${ex.load||'40'}" value="${ex.load||''}"></div>
@@ -408,7 +407,7 @@ export function sessionHistoryHTML(){
     ${chart?`<div class="chart-wrap">${chart}</div>`:''}
     <div style="margin-top:10px">
       ${recent.map(s=>`<div class="row" onclick="viewSession('${s.id}')" style="cursor:pointer">
-        <div class="name"><b>${esc(s.routineName)}</b><span>${dShort(s.date)} · ${s.entries.length} exercícios</span></div>
+        <div class="name"><b>${esc(s.routineName)}</b><span>${dShort(s.date)} · ${(s.entries||[]).length} exercícios</span></div>
         <div class="pills"><span class="pill">${Math.round(s.volume)} kg</span>${s.minutes?`<span class="pill dim">⏱ ${s.minutes}min</span>`:''}</div>
         <div class="row-actions"><button class="mini">👁️</button></div>
       </div>`).join('')}

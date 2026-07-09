@@ -339,10 +339,10 @@ export function saveProfile(){
   if(!S.routines.length){
     showModal(`<h3>✅ Perfil pronto!</h3>
       <p class="sub">Metas de calorias e macros já calculadas.</p>
-      <div class="why">Agora deixa comigo: eu monto seu treino completo — exercícios, séries, repetições e descanso — com base no seu perfil e em estudos do PubMed. Você só confirma 3 escolhas.</div>
+      <div class="why">Agora escolha um treino pronto — todos completos (exercícios, séries e descanso), baseados em estudos do PubMed e com instrução de como fazer cada exercício. É só tocar e usar.</div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeModal()">Depois</button>
-        <button class="btn btn-acc" style="flex:1;justify-content:center" onclick="go('treino');openGeradorWizard()">🧬 Montar meu treino</button>
+        <button class="btn btn-acc" style="flex:1;justify-content:center" onclick="go('treino');openTreinosProntos()">🧬 Escolher meu treino</button>
       </div>`);
   }else toast('Perfil salvo! Metas recalculadas ✅');
 }

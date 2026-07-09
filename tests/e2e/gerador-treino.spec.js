@@ -6,7 +6,7 @@ test('wizard gera programa completo com evidências e aplica na aba Treino', asy
   await criarPerfil(page);
 
   await page.locator('#tab-treino').click();
-  await page.locator('#routines button:has-text("🧬 Montar meu treino")').click();
+  await page.locator('#routines button:has-text("⚙️ Montar sob medida")').click();
 
   // wizard abre com as 3 escolhas pré-marcadas pelo perfil
   await expect(page.locator('#modal')).toContainText('Já deixei tudo marcado');

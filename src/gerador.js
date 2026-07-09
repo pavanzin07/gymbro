@@ -2,6 +2,7 @@ import {S,save,uid,esc} from './state.js';
 import {toast,showModal,closeModal,go} from './ui.js';
 import {EXLIB} from './data/exercicios.js';
 import {EVID,evidLink} from './data/evidencia.js';
+import {PROGRAMAS,recomendadoPronto} from './data/programas.js';
 import {renderRoutines} from './treino.js';
 import {gcat} from './perfil.js';
 
@@ -79,7 +80,7 @@ export function gerarPrograma({dias=3,foco='hipertrofia',volume='padrao'}={}){
         sets:String(comp?F.setsComp:F.setsIso),
         reps:comp?F.repsComp:F.repsIso,
         rest:String(comp?F.restComp:F.restIso),
-        load:'',note:'',history:[]};
+        load:'',note:ex.d||'',history:[]};
     }).filter(Boolean);
     // compostos primeiro (evidência: ordem)
     exercises.sort((a,b)=>{
@@ -92,6 +93,34 @@ export function gerarPrograma({dias=3,foco='hipertrofia',volume='padrao'}={}){
   const semana={};
   routines.forEach(r=>r.exercises.forEach(e=>{semana[e.musc]=(semana[e.musc]||0)+Number(e.sets);}));
   return{routines,split:split.nome,semana,refs:EVID};
+}
+
+/* ============ TREINOS PRONTOS ============ */
+export function prontoCardsHTML(){
+  const rec=recomendadoPronto(S.profile);
+  return PROGRAMAS.map(p=>`
+    <button type="button" class="opt" style="width:100%;text-align:left;margin-top:6px${p.k===rec?';border-color:var(--acc)':''}" onclick="usarProntoPreview('${p.k}')">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="font-size:22px">${p.emoji}</div>
+        <div style="flex:1"><b style="font-size:13.5px">${p.nome}</b> <span style="color:var(--mut);font-size:11.5px">${p.frase}</span>
+          <div style="color:var(--mut);font-size:11.5px;margin-top:3px">${p.desc}</div></div>
+        ${p.k===rec?'<span class="pill" style="color:var(--acc)">pra você</span>':''}
+      </div>
+    </button>`).join('');
+}
+export function openTreinosProntos(){
+  showModal(`<h3>🧬 Escolha seu treino</h3>
+    <p class="sub">Todos prontos e baseados em estudos do PubMed. Toque num, veja como fica e use — dá pra editar tudo depois.</p>
+    ${prontoCardsHTML()}
+    <div class="modal-actions" style="flex-wrap:wrap">
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="openGeradorWizard()">⚙️ Montar sob medida</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeModal();openRoutine()">✏️ Criar do zero</button>
+    </div>`);
+}
+export function usarProntoPreview(k){
+  const p=PROGRAMAS.find(x=>x.k===k);if(!p)return;
+  _wiz={...p.cfg};
+  gerarPreview();
 }
 
 /* ============ WIZARD (3 escolhas pré-marcadas) ============ */
