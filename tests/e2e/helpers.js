@@ -7,6 +7,8 @@ export async function criarPerfil(page, { weight = '80', height = '175' } = {}) 
   await page.locator('[data-g="level"][data-k="ini"]').click();
   await page.locator('[data-g="life"][data-k="lev"]').click();
   await page.locator('.modal-actions button:has-text("Salvar perfil")').click();
+  // fecha o convite do onboarding (perfil novo emenda no gerador de treino)
+  await page.locator('#modal button:has-text("Depois")').click();
 }
 
 export async function criarTreinoDoZero(page, nome = 'Treino A') {

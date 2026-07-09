@@ -172,8 +172,21 @@ export function aplicarPrograma(){
   const oldHist={};
   S.routines.forEach(r=>r.exercises.forEach(ex=>{if(ex.history&&ex.history.length)oldHist[ex.name.toLowerCase()]=ex.history;}));
   _wizProg.routines.forEach(r=>r.exercises.forEach(ex=>{if(oldHist[ex.name.toLowerCase()])ex.history=oldHist[ex.name.toLowerCase()];}));
+  const nDias=_wizProg.routines.length;
   S.routines=_wizProg.routines;
   save();renderRoutines();closeModal();go('treino');
   toast('Programa criado! Bora treinar 🧬💪');
   _wizProg=null;_wiz=null;
+  // Onboarding: se a alimentação ainda não foi montada, emenda na dieta
+  const temDieta=(S.mealTemplate||[]).some(m=>m.foods&&m.foods.length)
+    ||Object.values(S.mealDiary||{}).some(d=>d.some(m=>m.foods&&m.foods.length));
+  if(!temDieta){
+    showModal(`<h3>🏋️ Treino pronto!</h3>
+      <p class="sub">Seus ${nDias} dias já estão na aba Treino.</p>
+      <div class="why">Que tal já deixar a alimentação resolvida também? Eu monto seu dia de refeições mirando suas metas (${S.targets.kcal} kcal · ${S.targets.prot}g de proteína), com comida de verdade.</div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">Depois</button>
+        <button class="btn btn-acc" style="flex:1;justify-content:center" onclick="openDietaWizard()">🍽️ Montar minha dieta</button>
+      </div>`);
+  }
 }

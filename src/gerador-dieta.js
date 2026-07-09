@@ -159,4 +159,14 @@ export function aplicarDia(){
   save();renderDieta();closeModal();go('dieta');
   toast('Dia alimentar montado! 🍽️ Virou seu modelo também');
   _dwizDia=null;_dwiz=null;
+  // Onboarding: fecha a esteira convidando pro personagem
+  if(!(S.characters&&S.characters.length)){
+    showModal(`<h3>🎉 Tudo pronto!</h3>
+      <p class="sub">Perfil ✅ · Treino ✅ · Dieta ✅</p>
+      <div class="why">Falta só a parte mais divertida: seu personagem. Ele ganha XP, moedas e músculos conforme você treina, come direito e bate suas metas de verdade.</div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">Depois</button>
+        <button class="btn btn-acc" style="flex:1;justify-content:center" onclick="go('bro');openCharacterForm(-1)">🦾 Criar meu Bro</button>
+      </div>`);
+  }
 }
