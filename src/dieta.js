@@ -66,7 +66,10 @@ export function renderDieta(){
     <span style="font-weight:700;font-size:13px">${dShort(_mealViewDate)}</span>
     <button class="btn btn-ghost btn-sm" onclick="switchMealDate(1)">Próxima →</button>
   </div>
-  ${!meals.length?`<div style="margin-bottom:10px"><button class="btn btn-ghost btn-sm" onclick="copyMealTemplate()" style="width:100%;justify-content:center">📋 Copiar modelo do dia</button></div>`:''}`;
+  ${!meals.length?`<div style="margin-bottom:10px;display:flex;gap:8px">
+    <button class="btn btn-acc btn-sm" onclick="openDietaWizard()" style="flex:1;justify-content:center">🧬 Montar meu dia</button>
+    <button class="btn btn-ghost btn-sm" onclick="copyMealTemplate()" style="flex:1;justify-content:center">📋 Copiar modelo</button>
+  </div>`:''}`;
   box.innerHTML=dateNav+meals.map(m=>{
     const t=mealTotals(m);
     const foods=m.foods.map(f=>`

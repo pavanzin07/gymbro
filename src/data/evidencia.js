@@ -28,4 +28,27 @@ export const EVID=[
    achado:'Iniciantes progridem com menos volume e intensidade do que avançados — mais nem sempre é melhor no começo.',
    decisao:'Seu nível de experiência pré-seleciona o volume: quem está começando parte de uma dose menor e sobe com o tempo.'}
 ];
+/* ---- Nutrição: sustenta o gerador de dia alimentar ---- */
+export const EVID_DIETA=[
+  {id:'prot-total',pmid:'28698222',autor:'Morton, Murphy, McKellar et al.',ano:2018,rev:'Br J Sports Med',
+   titulo:'A systematic review, meta-analysis and meta-regression of protein supplementation',
+   achado:'~1,6 g de proteína por kg de peso por dia maximiza o ganho de massa magra com treino de força.',
+   decisao:'Sua meta de proteína (definida no Perfil) é o alvo nº 1 do gerador — as refeições são escolhidas pra batê-la.'},
+  {id:'prot-dist',pmid:'29497353',autor:'Schoenfeld & Aragon',ano:2018,rev:'J Int Soc Sports Nutr',
+   titulo:'How much protein can the body use in a single meal for muscle-building?',
+   achado:'Distribuir a proteína em ~4 refeições (~0,4 g/kg por refeição) aproveita melhor o estímulo de síntese muscular.',
+   decisao:'O plano padrão usa 4 refeições e espalha a proteína entre elas em vez de concentrar tudo numa só.'},
+  {id:'freq-ref',pmid:'26024494',autor:'Schoenfeld, Aragon & Krieger',ano:2015,rev:'Nutrition Reviews',
+   titulo:'Effects of meal frequency on weight loss and body composition',
+   achado:'O total do dia importa muito mais que o número de refeições — 3, 4 ou 5 funcionam igual se as metas fecharem.',
+   decisao:'Você escolhe quantas refeições cabem na sua rotina; o gerador fecha as metas em qualquer formato.'},
+  {id:'aderencia',pmid:'25182101',autor:'Johnston, Kanters, Bandayrel et al.',ano:2014,rev:'JAMA',
+   titulo:'Comparison of weight loss among named diet programs',
+   achado:'Comparando dietas famosas, as diferenças são pequenas — o que decide o resultado é conseguir manter.',
+   decisao:'Os pratos são comida brasileira de verdade (arroz, feijão, frango...) pra você conseguir seguir todo dia.'},
+  {id:'janela',pmid:'23360586',autor:'Aragon & Schoenfeld',ano:2013,rev:'J Int Soc Sports Nutr',
+   titulo:'Nutrient timing revisited: is there a post-exercise anabolic window?',
+   achado:'A "janela anabólica" é bem mais ampla do que se pensava — o dia todo conta, não só o pós-treino.',
+   decisao:'Nada de neura com horário: o gerador foca no total do dia, e o lanche encaixa onde for melhor pra você.'}
+];
 export const evidLink=pmid=>`https://pubmed.ncbi.nlm.nih.gov/${pmid}/`;
