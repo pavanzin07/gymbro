@@ -36,7 +36,10 @@ export function load(){
         else r.characters=[];
         r.activeChar=0;
       }
-      r.characters.forEach(c=>{if(!c.equipped)c.equipped={};['head','neck','wrists','hands','belt','top','bottom','feet','cape'].forEach(s=>{if(c.equipped[s]===undefined)c.equipped[s]=s==='bottom'?'short_black':null;});});
+      r.characters.forEach(c=>{if(!c.equipped)c.equipped={};['head','neck','wrists','hands','belt','top','bottom','feet','cape'].forEach(s=>{if(c.equipped[s]===undefined)c.equipped[s]=s==='bottom'?'short_black':null;});
+        if(c.eyeColor==null)c.eyeColor=1;if(!c.eyeStyle)c.eyeStyle='determinado';
+        if(c.hairStyle==='topete')c.hairStyle='espetado'; // estilo antigo renomeado
+      });
       if(r.activeChar==null||r.activeChar>=r.characters.length)r.activeChar=0;
       if(!r.sessions)r.sessions=[];
       if(!r.goals)r.goals=[];

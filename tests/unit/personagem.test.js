@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { S, replaceState } from '../../src/state.js';
-import { characterMetrics, goalProgress } from '../../src/personagem.js';
+import { characterMetrics, goalProgress, svgAvatar, newCharObj } from '../../src/personagem.js';
+import { RACES, HAIRSTYLES, EYECOLORS, EYESTYLES } from '../../src/data/racas.js';
 
 function baseState(overrides = {}) {
   return {
@@ -135,5 +136,36 @@ describe('goalProgress (progresso de metas customizadas)', () => {
     expect(pr.cur).toBe(2);
     expect(pr.pct).toBe(40);
     expect(pr.done).toBe(false);
+  });
+});
+
+describe('svgAvatar (renderização anime + customização)', () => {
+  it('newCharObj traz os novos campos de customização', () => {
+    const c = newCharObj();
+    expect(c.eyeColor).toBeTypeOf('number');
+    expect(c.eyeStyle).toBeTruthy();
+    expect(c.hairStyle).toBeTruthy();
+  });
+
+  it('gera SVG válido pra toda combinação de raça × expressão × estilo de cabelo sem quebrar', () => {
+    RACES.forEach(r => EYESTYLES.forEach(ex => HAIRSTYLES.forEach(hs => {
+      const ch = { ...newCharObj(), race: r.k, eyeStyle: ex.k, hairStyle: hs.k };
+      replaceState(baseState({ characters: [ch], activeChar: 0 }));
+      const svg = svgAvatar();
+      expect(svg.startsWith('<svg')).toBe(true);
+      expect(svg).toContain('</svg>');
+    })));
+  });
+
+  it('respeita a cor dos olhos escolhida no desenho', () => {
+    const ch = { ...newCharObj(), eyeColor: 3, hairStyle: 'curto' };
+    replaceState(baseState({ characters: [ch], activeChar: 0 }));
+    expect(svgAvatar()).toContain(EYECOLORS[3]);
+  });
+
+  it('todos os equipamentos juntos renderizam sem erro', () => {
+    const ch = { ...newCharObj(), equipped: { head: 'helm_horned', neck: 'chain', wrists: 'wrist', hands: 'sword', belt: 'belt', top: 'armor_plate', bottom: 'greaves', feet: 'boots_leather', cape: 'cape_red' } };
+    replaceState(baseState({ characters: [ch], activeChar: 0, wallet: { owned: [], spent: 0 } }));
+    expect(svgAvatar()).toContain('</svg>');
   });
 });

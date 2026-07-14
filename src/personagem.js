@@ -2,14 +2,14 @@ import {S,save,esc,num} from './state.js';
 import {toast,showModal,closeModal} from './ui.js';
 import {chipRow,chipVal} from './perfil.js';
 import {computeStreak} from './progresso.js';
-import {SKINS,HAIRS,HAIRSTYLES,RACES,raceCfg} from './data/racas.js';
+import {SKINS,HAIRS,HAIRSTYLES,RACES,raceCfg,EYECOLORS,EYESTYLES} from './data/racas.js';
 import {RPGCLASSES,rpgClass,rarityOf,SLOTS,SHOP,itemById,STATMETA} from './data/loja.js';
 
 /* ============ PERSONAGEM (RPG) ============ */
 export function darken(hex,f){const h=hex.replace('#','');const r=Math.round(parseInt(h.slice(0,2),16)*f),g=Math.round(parseInt(h.slice(2,4),16)*f),b=Math.round(parseInt(h.slice(4,6),16)*f);return'#'+[r,g,b].map(x=>Math.max(0,Math.min(255,x)).toString(16).padStart(2,'0')).join('');}
 export function CHAR(){return(S.characters&&S.characters[S.activeChar])||null;}
 export function hasChar(){return!!(S.characters&&S.characters.length);}
-export function newCharObj(){return{name:'Meu Bro',race:'humano',sex:'M',skin:1,hair:0,hairStyle:'curto',equipped:{head:null,neck:null,wrists:null,hands:null,belt:null,top:null,bottom:'short_black',feet:null,cape:null}};}
+export function newCharObj(){return{name:'Meu Bro',race:'humano',sex:'M',skin:1,hair:0,hairStyle:'espetado',eyeColor:1,eyeStyle:'determinado',equipped:{head:null,neck:null,wrists:null,hands:null,belt:null,top:null,bottom:'short_black',feet:null,cape:null}};}
 export function eqColor(slot,def){const c=CHAR();const id=c&&c.equipped[slot];const it=id&&itemById(id);return it?it.color:def;}
 export function isCompound(n){return /agach|supino|terra|stiff|remada|desenvolv|barra fixa|puxada|leg press|paralel|afund|hack|levantamento|hip thrust|pélvica/i.test(n||'');}
 
@@ -82,219 +82,227 @@ export function avatarStage(){const s=characterMetrics().stats.musc;return s<22?
 
 export function svgAvatar(){
   const ch=CHAR()||newCharObj(),m=avatarStage(),sex=ch.sex||'M';
-  const RC=raceCfg(ch.race);
+  const R=raceCfg(ch.race);
   const skin=SKINS[ch.skin!=null?ch.skin:1];
-  const skD=darken(skin,0.80),skDD=darken(skin,0.66),skHi=darken(skin,1.12);
-  const hair=HAIRS[ch.hair!=null?ch.hair:0],hairD=darken(hair,0.70),hairHi=darken(hair,1.2),style=ch.hairStyle||'curto';
-  const eq=ch.equipped||{},OUT='#141013';
-  const eyeC=RC.k==='besta'?'#e23b2a':({humano:'#5b3a1e',elfo:'#2e8b57',anao:'#3a5a7a'}[RC.k]||'#5b3a1e');
-  // ---- grid: 18 col x 32 row, célula C ----
-  const C=11,cx=9;
+  const skD=darken(skin,0.82),skDD=darken(skin,0.66),skHi=darken(skin,1.14);
+  const hair=HAIRS[ch.hair!=null?ch.hair:0],hairD=darken(hair,0.70),hairHi=darken(hair,1.30),style=ch.hairStyle||'curto';
+  const eyeC=EYECOLORS[ch.eyeColor!=null?ch.eyeColor:0],eyeD=darken(eyeC,0.66),eyeHi=darken(eyeC,1.35);
+  const expr=ch.eyeStyle||'determinado';
+  const OUT='#1c151b',ow=2.6;
+  const eq=ch.equipped||{},cx=100,bm=R.body;
+  const shA=((sex==='M'?27:23)*bm)+m*7, wA=((sex==='M'?18:16)*bm)+m*1.5, hA=((sex==='M'?21:24)*bm)+m;
+  const armW=(10.5+m*4)*bm, legW=(14+m*3)*bm;
+  const shoulderY=96, footY=322;
+  const hipY=Math.round(193-(R.leg-1)*100), waistY=hipY-8;
+  const lSho=cx-shA+4,rSho=cx+shA-4,lHand=cx-shA-3,rHand=cx+shA+3,handY=waistY-2;
+  const lLeg=cx-10,rLeg=cx+10,lFoot=cx-12,rFoot=cx+12;
   const P=[];
-  const X=g=>+(g*C).toFixed(1);
-  // bloco com contorno duro (pixel)
-  const RO=(x,y,w,h,f)=>P.push(`<rect x="${X(x)}" y="${X(y)}" width="${X(w)}" height="${X(h)}" fill="${f}" stroke="${OUT}" stroke-width="2.4" stroke-linejoin="miter"/>`);
-  // detalhe chapado, sem contorno
-  const RF=(x,y,w,h,f,op)=>P.push(`<rect x="${X(x)}" y="${X(y)}" width="${X(w)}" height="${X(h)}" fill="${f}"${op?` opacity="${op}"`:''}/>`);
-  const eqCol=(slot)=>{const id=eq[slot];const it=id&&itemById(id);return it?it.color:null;};
-
-  // sombra / pedestal (chão)
-  P.push(`<ellipse cx="${X(cx)}" cy="342" rx="70" ry="12" fill="rgba(198,255,58,0.10)"/>`);
-  P.push(`<ellipse cx="${X(cx)}" cy="340" rx="56" ry="8" fill="none" stroke="rgba(198,255,58,0.40)" stroke-width="2"/>`);
-
-  // dimensões por músculo + raça
-  const bulk=(RC.k==='anao'||RC.k==='besta')?0.5:(RC.k==='elfo'?-0.3:0);
-  const chH=3.0+m*0.55+bulk;      // meia-largura do peito (células)
-  const waH=2.1+m*0.22+bulk*0.5;  // meia-largura da cintura
-  const armW=(m>=2?1.5:1.15)+bulk*0.3;
-  const hipH=RC.headR*0.2+2.4+bulk*0.4;
-  const headHalf=2.7*RC.headR+0.2;
-  const headTopY=2, headH=6*(0.92+0.08*RC.headR), headBotY=headTopY+headH;
-  const neckY=headBotY, shoY=neckY+1;            // ombro
-  const chestBotY=shoY+4.6;                        // fim do peito
-  const waistY=chestBotY, waistBotY=waistY+2.2;    // cintura
-  const hipY=waistBotY, hipBotY=hipY+2.6;          // quadril/short
-  const legTopY=hipBotY, footY=28.4;               // pernas
-  const armTopY=shoY+0.2, armBotY=waistY+0.3;
-
-  // cores de equipamento
-  const topC=eqCol('top'), botC=eqCol('bottom')||'#26303a', feetC=eqCol('feet');
-  const sleeve=(topC&&['armor_plate','tunic_leather','robe_mage'].includes(eq.top))?topC:null;
-  const isPants=['pants_leather','greaves'].includes(eq.bottom);
-  const isBoot=eq.feet==='boots_leather';
-
-  /* ---------- CAPA (atrás) ---------- */
+  const gid='bg'+(ch.skin||0);
+  P.push(`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${skD}"/><stop offset="0.45" stop-color="${skin}"/><stop offset="1" stop-color="${skDD}"/></linearGradient></defs>`);
+  // PEDESTAL
+  P.push(`<ellipse cx="${cx}" cy="338" rx="64" ry="13" fill="rgba(198,255,58,0.10)"/>`);
+  P.push(`<ellipse cx="${cx}" cy="336" rx="52" ry="9" fill="none" stroke="rgba(198,255,58,0.45)" stroke-width="2"/>`);
+  // CAPA (atrás de tudo)
   if(eq.cape){const cc=itemById(eq.cape).color;
-    RO(cx-chH-0.5, shoY-0.2, (chH+0.5)*2, (footY-2)-(shoY-0.2), cc);
-    RF(cx-0.18, shoY+0.4, 0.36, (footY-3)-(shoY+0.4), darken(cc,0.72), 0.7);
-    RF(cx-chH-0.5, shoY-0.2, 0.5, (footY-2)-(shoY-0.2), darken(cc,1.25), 0.4);
+    P.push(`<path d="M ${cx-shA+2} ${shoulderY-2} Q ${cx-shA-8} ${(shoulderY+footY)/2} ${cx-hA-6} ${footY-14} Q ${cx} ${footY-2} ${cx+hA+6} ${footY-14} Q ${cx+shA+8} ${(shoulderY+footY)/2} ${cx+shA-2} ${shoulderY-2} Q ${cx} ${shoulderY+8} ${cx-shA+2} ${shoulderY-2} Z" fill="${cc}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);
+    P.push(`<path d="M ${cx} ${shoulderY+4} L ${cx} ${footY-14}" stroke="${darken(cc,0.78)}" stroke-width="2" opacity="0.6"/>`);
   }
-
-  /* ---------- PERNAS ---------- */
-  const legW=1.7+ (m>=3?0.4:0)+bulk*0.2, legGap=0.55;
-  const lLegX=cx-legGap-legW, rLegX=cx+legGap;
-  const legColor=isPants?botC:skin;
-  [lLegX,rLegX].forEach((lx,i)=>{
-    RO(lx, legTopY, legW, footY-legTopY, legColor);
-    RF(lx+legW*0.62, legTopY+0.2, legW*0.38, footY-legTopY-0.4, darken(legColor,0.82),0.8); // sombra lateral
-    if(!isPants&&m>=2)RF(lx+legW*0.35,legTopY+1.2,legW*0.14,4,skD,0.5); // linha da coxa
+  // LEGS
+  [[lLeg,lFoot],[rLeg,rFoot]].forEach(([lx,fx])=>{
+    P.push(`<line x1="${lx}" y1="${hipY}" x2="${fx}" y2="${footY-10}" stroke="${OUT}" stroke-width="${legW+ow*2}" stroke-linecap="round"/>`);
+    P.push(`<line x1="${lx}" y1="${hipY}" x2="${fx}" y2="${footY-10}" stroke="${skin}" stroke-width="${legW}" stroke-linecap="round"/>`);
+    P.push(`<line x1="${lx-legW/4}" y1="${hipY+4}" x2="${fx-legW/4}" y2="${footY-14}" stroke="${skHi}" stroke-width="${legW/4}" stroke-linecap="round" opacity="0.5"/>`);
   });
-  // pés / sapato / bota
-  const footW=legW+0.7;
-  [lLegX,rLegX].forEach((lx)=>{
-    if(isBoot){RO(lx-0.15, footY-4.2, legW+0.3, 4.2, feetC);RF(lx-0.15,footY-1,legW+0.3,1,darken(feetC,0.7),0.7);}
-    RO(lx-0.35, footY-1.1, footW, 2.1, feetC||skin);
-  });
-
-  /* ---------- QUADRIL / SHORT ---------- */
-  RO(cx-hipH, hipY-0.2, hipH*2, hipBotY-hipY+0.4, botC);
-  RF(cx-0.12, hipY, 0.24, hipBotY-hipY, darken(botC,0.7),0.6); // vinco central
-  RF(cx+hipH*0.4, hipY, hipH*0.6, hipBotY-hipY+0.4, darken(botC,0.85),0.6); // sombra
-
-  /* ---------- BRAÇOS ---------- */
-  const lArmX=cx-chH-armW+0.15, rArmX=cx+chH-0.15;
-  [[lArmX,-1],[rArmX,1]].forEach(([ax,s])=>{
-    const col=sleeve||skin;
-    RO(ax, armTopY, armW, armBotY-armTopY, col);
-    RF(ax+(s>0?armW*0.6:0), armTopY+0.2, armW*0.4, armBotY-armTopY-0.4, darken(col,0.82),0.8);
-    if(!sleeve&&m>=2)RF(ax+armW*0.28,armTopY+ (armBotY-armTopY)*0.3,armW*0.4,1.4,skHi,0.35); // bíceps
-    if(sleeve&&['armor_plate'].includes(eq.top)){ // ombreira
-      RO(ax-0.25, armTopY-0.4, armW+0.5, 1.7, darken(col,1.1));
+  const shoe=eq.feet&&itemById(eq.feet);
+  if(shoe){
+    if(eq.feet==='boots_leather'){
+      P.push(`<line x1="${lLeg-1}" y1="${footY-34}" x2="${lFoot}" y2="${footY-6}" stroke="${shoe.color}" stroke-width="${legW+3}" stroke-linecap="round"/>`);
+      P.push(`<line x1="${rLeg+1}" y1="${footY-34}" x2="${rFoot}" y2="${footY-6}" stroke="${shoe.color}" stroke-width="${legW+3}" stroke-linecap="round"/>`);
     }
-  });
-  // mãos
-  const handY=armBotY-0.1;
-  const handCol=(eq.hands&&['gloves','straps'].includes(eq.hands))?itemById(eq.hands).color:skin;
-  RO(lArmX-0.05, handY, armW+0.1, 1.6, handCol);
-  RO(rArmX-0.05, handY, armW+0.1, 1.6, handCol);
-  if(eq.wrists){const wc=itemById(eq.wrists).color;RF(lArmX-0.1,handY-0.9,armW+0.2,0.9,wc);RF(rArmX-0.1,handY-0.9,armW+0.2,0.9,wc);
-    P.push(`<rect x="${X(lArmX-0.1)}" y="${X(handY-0.9)}" width="${X(armW+0.2)}" height="${X(0.9)}" fill="none" stroke="${OUT}" stroke-width="1.6"/>`);
-    P.push(`<rect x="${X(rArmX-0.1)}" y="${X(handY-0.9)}" width="${X(armW+0.2)}" height="${X(0.9)}" fill="none" stroke="${OUT}" stroke-width="1.6"/>`);}
-
-  /* ---------- TRONCO ---------- */
-  const torsoCol=topC||skin;
-  // peito (bloco largo) + cintura (bloco estreito) = silhueta em V
-  RO(cx-chH, shoY, chH*2, chestBotY-shoY, torsoCol);
-  RO(cx-waH, waistY-0.1, waH*2, waistBotY-waistY+0.2, torsoCol);
-  // sombra lateral direita do tronco (volume)
-  RF(cx+chH*0.55, shoY+0.2, chH*0.45, chestBotY-shoY-0.2, darken(torsoCol,0.84),0.85);
-  RF(cx-chH, shoY, chH*0.35, chestBotY-shoY-0.4, darken(torsoCol,1.14),0.30); // luz esquerda
-  if(!topC){ // torso nu: peitoral + abdômen
-    RF(cx-chH*0.62, shoY+2.1, chH*1.24, 0.4, skD, 0.7); // linha peitoral
-    RF(cx-0.09, shoY+0.6, 0.18, chestBotY-shoY-1, skD, 0.5); // esterno
-    if(m>=1){for(let a=0;a<(m>=2?3:2);a++){RF(cx-chH*0.4, chestBotY-0.2-a*1.05, chH*0.8, 0.34, skD,0.6);}}
-    if(m>=2){RF(cx-chH*0.5,shoY+0.5,chH*0.42,1.6,skHi,0.28);RF(cx+chH*0.1,shoY+0.5,chH*0.42,1.6,skHi,0.22);} // brilho peito
-  }else if(eq.top==='armor_plate'){
-    RF(cx-chH*0.6,shoY+2.2,chH*1.2,0.5,darken(topC,0.72),0.9);
-    RF(cx-0.12,shoY+0.4,0.24,chestBotY-shoY-0.6,darken(topC,0.72),0.8);
-    RF(cx-chH*0.5,shoY+0.5,chH,1.4,darken(topC,1.2),0.4);
-  }else if(eq.top==='robe_mage'){
-    RO(cx-waH-0.2, waistBotY-0.1, (waH+0.2)*2, hipBotY-waistBotY+1.2, topC); // manto desce
-    RF(cx-waH,waistY+0.2,waH*2,0.5,'#d9a441',0.9);
+    P.push(`<ellipse cx="${lFoot-2}" cy="${footY}" rx="${legW/1.4+4}" ry="9" fill="${shoe.color}" stroke="${OUT}" stroke-width="${ow}"/>`);
+    P.push(`<ellipse cx="${rFoot+2}" cy="${footY}" rx="${legW/1.4+4}" ry="9" fill="${shoe.color}" stroke="${OUT}" stroke-width="${ow}"/>`);
+    if(eq.feet==='squat_shoe'){P.push(`<rect x="${lFoot-legW/1.4-3}" y="${footY+5}" width="${legW/0.7}" height="5" rx="2" fill="#222"/>`);P.push(`<rect x="${rFoot-legW/1.4+1}" y="${footY+5}" width="${legW/0.7}" height="5" rx="2" fill="#222"/>`);}
+  }else{P.push(`<ellipse cx="${lFoot-1}" cy="${footY}" rx="${legW/2+2}" ry="7" fill="${skin}" stroke="${OUT}" stroke-width="${ow}"/>`);P.push(`<ellipse cx="${rFoot+1}" cy="${footY}" rx="${legW/2+2}" ry="7" fill="${skin}" stroke="${OUT}" stroke-width="${ow}"/>`);
+    if(R.k==='besta'){P.push(`<path d="M ${lFoot-legW/2-2} ${footY} l -5 -3 M ${lFoot-legW/2-2} ${footY+2} l -5 0 M ${rFoot+legW/2+2} ${footY} l 5 -3 M ${rFoot+legW/2+2} ${footY+2} l 5 0" stroke="${OUT}" stroke-width="1.6"/>`);}}
+  // CALÇA / SHORT
+  const shortC=eqColor('bottom','#26303a');
+  const isPants=eq.bottom==='pants_leather'||eq.bottom==='greaves';
+  if(isPants){
+    P.push(`<line x1="${lLeg}" y1="${hipY-2}" x2="${lFoot}" y2="${footY-16}" stroke="${shortC}" stroke-width="${legW+1}" stroke-linecap="round"/>`);
+    P.push(`<line x1="${rLeg}" y1="${hipY-2}" x2="${rFoot}" y2="${footY-16}" stroke="${shortC}" stroke-width="${legW+1}" stroke-linecap="round"/>`);
+    if(eq.bottom==='greaves'){P.push(`<line x1="${lLeg}" y1="${hipY+20}" x2="${lFoot-4}" y2="${footY-18}" stroke="${darken(shortC,1.2)}" stroke-width="2" opacity="0.5"/>`);P.push(`<line x1="${rLeg}" y1="${hipY+20}" x2="${rFoot+4}" y2="${footY-18}" stroke="${darken(shortC,1.2)}" stroke-width="2" opacity="0.5"/>`);}
   }
-  // cinturão
-  if(eq.belt){const bc=itemById(eq.belt).color;RO(cx-waH-0.1, waistBotY-0.7, (waH+0.1)*2, 1.1, bc);RF(cx-0.5,waistBotY-0.6,1,0.9,'#d9a441');}
+  P.push(`<path d="M ${cx-hA-2} ${hipY-12} L ${cx+hA+2} ${hipY-12} L ${cx+hA-2} ${hipY+34} L ${cx+4} ${hipY+30} L ${cx} ${hipY+40} L ${cx-4} ${hipY+30} L ${cx-hA+2} ${hipY+34} Z" fill="${shortC}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);
+  // ARMS
+  [[lSho,lHand],[rSho,rHand]].forEach(([sx,hx])=>{
+    P.push(`<line x1="${sx}" y1="${shoulderY+8}" x2="${hx}" y2="${handY}" stroke="${OUT}" stroke-width="${armW+ow*2}" stroke-linecap="round"/>`);
+    P.push(`<line x1="${sx}" y1="${shoulderY+8}" x2="${hx}" y2="${handY}" stroke="${skin}" stroke-width="${armW}" stroke-linecap="round"/>`);
+  });
+  if(m>=2){P.push(`<circle cx="${(lSho+lHand)/2+1}" cy="${(shoulderY+8+handY)/2-6}" r="${armW/2.6}" fill="rgba(255,255,255,0.10)"/>`);P.push(`<circle cx="${(rSho+rHand)/2-1}" cy="${(shoulderY+8+handY)/2-6}" r="${armW/2.6}" fill="rgba(255,255,255,0.10)"/>`);}
+  P.push(`<circle cx="${lHand}" cy="${handY+2}" r="${armW/2-1}" fill="${skin}" stroke="${OUT}" stroke-width="${ow}"/>`);
+  P.push(`<circle cx="${rHand}" cy="${handY+2}" r="${armW/2-1}" fill="${skin}" stroke="${OUT}" stroke-width="${ow}"/>`);
+  // TORSO (gradiente = volume)
+  P.push(`<path d="M ${cx-shA} ${shoulderY} Q ${cx-shA-3} ${shoulderY+30} ${cx-wA} ${waistY} L ${cx+wA} ${waistY} Q ${cx+shA+3} ${shoulderY+30} ${cx+shA} ${shoulderY} Q ${cx} ${shoulderY-8} ${cx-shA} ${shoulderY} Z" fill="url(#${gid})" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);
+  P.push(`<path d="M ${cx-shA+7} ${shoulderY+3} Q ${cx} ${shoulderY+11} ${cx+shA-7} ${shoulderY+3}" stroke="${skD}" stroke-width="2" fill="none" opacity="0.7"/>`);
+  if(m>=1){P.push(`<line x1="${cx}" y1="${shoulderY+14}" x2="${cx}" y2="${waistY-6}" stroke="${skD}" stroke-width="2.2"/>`);
+    P.push(`<path d="M ${cx-2} ${shoulderY+15} Q ${cx-15} ${shoulderY+23} ${cx-17} ${shoulderY+31}" stroke="${skD}" stroke-width="2" fill="none"/>`);
+    P.push(`<path d="M ${cx+2} ${shoulderY+15} Q ${cx+15} ${shoulderY+23} ${cx+17} ${shoulderY+31}" stroke="${skD}" stroke-width="2" fill="none"/>`);}
+  if(m>=2){P.push(`<line x1="${cx-13}" y1="${shoulderY+50}" x2="${cx+13}" y2="${shoulderY+50}" stroke="${skD}" stroke-width="1.6"/>`);
+    P.push(`<line x1="${cx-12}" y1="${shoulderY+64}" x2="${cx+12}" y2="${shoulderY+64}" stroke="${skD}" stroke-width="1.6"/>`);
+    P.push(`<line x1="${cx-11}" y1="${shoulderY+78}" x2="${cx+11}" y2="${shoulderY+78}" stroke="${skD}" stroke-width="1.4" opacity="0.7"/>`);}
+  if(eq.top){const tc=itemById(eq.top).color,tcD=darken(tc,0.78),tid=eq.top;
+    if(tid==='armor_plate'){
+      P.push(`<path d="M ${cx-shA} ${shoulderY-1} Q ${cx-shA-3} ${shoulderY+30} ${cx-wA-2} ${waistY+3} L ${cx+wA+2} ${waistY+3} Q ${cx+shA+3} ${shoulderY+30} ${cx+shA} ${shoulderY-1} Q ${cx} ${shoulderY+9} ${cx-shA} ${shoulderY-1} Z" fill="${tc}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);
+      P.push(`<path d="M ${cx-shA+8} ${shoulderY+4} Q ${cx} ${shoulderY+16} ${cx+shA-8} ${shoulderY+4}" stroke="${tcD}" stroke-width="2.4" fill="none"/>`);
+      P.push(`<line x1="${cx}" y1="${shoulderY+16} " x2="${cx}" y2="${waistY}" stroke="${tcD}" stroke-width="2.4"/>`);
+      P.push(`<path d="M ${cx-15} ${shoulderY+34} h30 M ${cx-14} ${shoulderY+50} h28 M ${cx-12} ${shoulderY+66} h24" stroke="${tcD}" stroke-width="2" fill="none"/>`);
+      P.push(`<circle cx="${cx-shA+2}" cy="${shoulderY+3}" r="${9*bm+m}" fill="${tc}" stroke="${OUT}" stroke-width="${ow}"/>`);
+      P.push(`<circle cx="${cx+shA-2}" cy="${shoulderY+3}" r="${9*bm+m}" fill="${tc}" stroke="${OUT}" stroke-width="${ow}"/>`);
+      P.push(`<circle cx="${cx-shA+2}" cy="${shoulderY+3}" r="${4}" fill="${tcD}"/><circle cx="${cx+shA-2}" cy="${shoulderY+3}" r="${4}" fill="${tcD}"/>`);
+    }else if(tid==='robe_mage'){
+      P.push(`<path d="M ${cx-shA+4} ${shoulderY} Q ${cx-shA-4} ${shoulderY+40} ${cx-hA-4} ${hipY+34} Q ${cx} ${hipY+44} ${cx+hA+4} ${hipY+34} Q ${cx+shA+4} ${shoulderY+40} ${cx+shA-4} ${shoulderY} Q ${cx} ${shoulderY+12} ${cx-shA+4} ${shoulderY} Z" fill="${tc}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);
+      P.push(`<path d="M ${cx} ${shoulderY+14} L ${cx} ${hipY+30}" stroke="${tcD}" stroke-width="2"/>`);
+      P.push(`<path d="M ${cx-wA} ${waistY} Q ${cx} ${waistY+6} ${cx+wA} ${waistY}" stroke="#d9a441" stroke-width="3" fill="none"/>`);
+    }else if(tid==='tunic_leather'){
+      P.push(`<path d="M ${cx-shA} ${shoulderY} Q ${cx-shA-3} ${shoulderY+30} ${cx-wA} ${waistY+4} L ${cx+wA} ${waistY+4} Q ${cx+shA+3} ${shoulderY+30} ${cx+shA} ${shoulderY} Q ${cx} ${shoulderY+2} ${cx-shA} ${shoulderY} Z" fill="${tc}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);
+      P.push(`<circle cx="${lSho}" cy="${shoulderY+14}" r="${armW/1.7}" fill="${tc}" stroke="${OUT}" stroke-width="${ow}"/>`);
+      P.push(`<circle cx="${rSho}" cy="${shoulderY+14}" r="${armW/1.7}" fill="${tc}" stroke="${OUT}" stroke-width="${ow}"/>`);
+      P.push(`<path d="M ${cx-8} ${shoulderY+6} L ${cx} ${shoulderY+18} L ${cx+8} ${shoulderY+6}" stroke="${tcD}" stroke-width="2" fill="none"/>`);
+      P.push(`<path d="M ${cx-wA} ${waistY} Q ${cx} ${waistY+5} ${cx+wA} ${waistY}" stroke="${darken(tc,0.6)}" stroke-width="3" fill="none"/>`);
+    }else{
+      P.push(`<path d="M ${cx-shA+5} ${shoulderY+1} Q ${cx-shA-2} ${shoulderY+30} ${cx-wA-1} ${waistY+2} L ${cx+wA+1} ${waistY+2} Q ${cx+shA+2} ${shoulderY+30} ${cx+shA-5} ${shoulderY+1} L ${cx+wA-2} ${shoulderY+5} Q ${cx} ${shoulderY+19} ${cx-wA+2} ${shoulderY+5} Z" fill="${tc}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);
+    }
+  }
+  if(eq.belt){P.push(`<rect x="${cx-wA-2}" y="${waistY-12}" width="${wA*2+4}" height="13" rx="3" fill="${itemById(eq.belt).color}" stroke="${OUT}" stroke-width="${ow}"/>`);P.push(`<rect x="${cx-5}" y="${waistY-11}" width="10" height="11" rx="2" fill="#d9a441" stroke="${OUT}" stroke-width="1.2"/>`);}
+  // NECK (curto, estilo anime)
+  const neckY=Math.round(74+14*R.headR);
+  P.push(`<rect x="${cx-7}" y="${neckY-4}" width="14" height="${shoulderY-neckY+8}" rx="5" fill="${skin}" stroke="${OUT}" stroke-width="${ow}"/>`);
+  P.push(`<path d="M ${cx-7} ${neckY-2} Q ${cx} ${neckY+5} ${cx+7} ${neckY-2}" fill="${skD}" opacity="0.4"/>`);
+  if(eq.neck){const nc=itemById(eq.neck).color;P.push(`<path d="M ${cx-13} ${neckY+8} Q ${cx} ${neckY+24} ${cx+13} ${neckY+8}" stroke="${nc}" stroke-width="3.5" fill="none"/>`);P.push(`<circle cx="${cx}" cy="${neckY+21}" r="3.5" fill="${nc}" stroke="${OUT}" stroke-width="1.4"/>`);}
 
-  /* ---------- PESCOÇO ---------- */
-  RO(cx-0.9, neckY-0.3, 1.8, shoY-neckY+0.6, skin);
-  RF(cx+0.2,neckY-0.2,0.7,shoY-neckY+0.4,skD,0.6);
-  if(eq.neck){const nc=itemById(eq.neck).color;RF(cx-1.1,shoY-0.2,2.2,0.5,nc);P.push(`<circle cx="${X(cx)}" cy="${X(shoY+0.4)}" r="4" fill="${nc}" stroke="${OUT}" stroke-width="1.6"/>`);}
-
-  /* ---------- CABEÇA ---------- */
-  const hx=cx-headHalf, hw=headHalf*2;
-  // orelhas
-  if(RC.ear==='point'){
-    RO(hx-0.5, headTopY+1.4, 0.9, 1.2, skin);
-    RO(hx+hw-0.4, headTopY+1.4, 0.9, 1.2, skin);
-    RF(hx-0.5,headTopY+1.4,0.4,0.5,skHi,0.5);
+  /* ======= CABEÇA ANIME (grupo escalado pela raça) ======= */
+  const H=[];
+  const headHides=eq.head&&['helm_steel','helm_horned','cap_black','cap_red'].includes(eq.head);
+  const showHair=!headHides&&style!=='careca';
+  const bald=style==='careca';
+  // -- cabelo de trás (atrás do rosto) --
+  if(showHair){
+    if(style==='longo'){H.push(`<path d="M ${cx-27} 30 Q ${cx-40} 74 ${cx-30} 104 L ${cx+30} 104 Q ${cx+40} 74 ${cx+27} 30 Q ${cx} 22 ${cx-27} 30 Z" fill="${hairD}" stroke="${OUT}" stroke-width="${ow}"/>`);}
+    else if(style==='ondulado'){H.push(`<path d="M ${cx-27} 34 Q ${cx-38} 62 ${cx-32} 84 Q ${cx-26} 78 ${cx-22} 88 Q ${cx-16} 80 ${cx-10} 90 L ${cx+10} 90 Q ${cx+16} 80 ${cx+22} 88 Q ${cx+26} 78 ${cx+32} 84 Q ${cx+38} 62 ${cx+27} 34 Q ${cx} 24 ${cx-27} 34 Z" fill="${hairD}" stroke="${OUT}" stroke-width="${ow}"/>`);}
+    else if(style==='rabo'){H.push(`<path d="M ${cx+20} 26 Q ${cx+44} 34 ${cx+40} 66 Q ${cx+38} 82 ${cx+28} 74 Q ${cx+32} 50 ${cx+18} 34 Z" fill="${hairD}" stroke="${OUT}" stroke-width="${ow}"/>`);H.push(`<circle cx="${cx+21}" cy="30" r="5" fill="${hair}" stroke="${OUT}" stroke-width="1.8"/>`);}
+  }
+  // -- orelhas --
+  if(R.ear==='point'){
+    H.push(`<path d="M ${cx-24} 50 L ${cx-36} 30 L ${cx-20} 44 Z" fill="${skin}" stroke="${OUT}" stroke-width="2" stroke-linejoin="round"/>`);
+    H.push(`<path d="M ${cx+24} 50 L ${cx+36} 30 L ${cx+20} 44 Z" fill="${skin}" stroke="${OUT}" stroke-width="2" stroke-linejoin="round"/>`);
   }else{
-    RO(hx-0.4, headTopY+2.2, 0.8, 1.2, skin);
-    RO(hx+hw-0.4, headTopY+2.2, 0.8, 1.2, skin);
+    H.push(`<ellipse cx="${cx-25}" cy="52" rx="4" ry="6" fill="${skin}" stroke="${OUT}" stroke-width="2"/>`);
+    H.push(`<ellipse cx="${cx+25}" cy="52" rx="4" ry="6" fill="${skin}" stroke="${OUT}" stroke-width="2"/>`);
   }
-  // cabelo atrás (longo)
-  if(style==='longo'&&(!eq.head||eq.head==='bandana')){
-    RO(hx-0.5, headTopY+1.6, hw+1, headH+2.6, hair);
-  }
-  // rosto
-  RO(hx, headTopY, hw, headH, skin);
-  RF(hx, headTopY, hw*0.34, headH-0.4, skHi, 0.28); // luz
-  RF(hx+hw*0.62, headTopY+0.2, hw*0.38, headH-0.4, skD, 0.6); // sombra
-  // bochechas
-  RF(hx+hw*0.12, headTopY+headH*0.62, 1, 0.7, 'rgba(220,110,90,0.18)');
-  RF(hx+hw*0.72, headTopY+headH*0.62, 1, 0.7, 'rgba(220,110,90,0.18)');
-  // olhos (pixel)
-  const eyeY=headTopY+headH*0.42, ew=1.05, eh=1.15;
-  const eLx=hx+hw*0.20, eRx=hx+hw*0.80-ew;
-  [eLx,eRx].forEach(ex=>{
-    RF(ex,eyeY,ew,eh,'#fff');
-    RF(ex+ew*0.30,eyeY+eh*0.22,ew*0.55,eh*0.6,eyeC);
-    RF(ex+ew*0.34,eyeY+eh*0.28,ew*0.3,eh*0.34,'#111');
-    RF(ex+ew*0.30,eyeY,ew*0.7,eh*0.16,skD,0.5); // pálpebra
+  // -- rosto (queixo fino, cel-shading chapado) --
+  H.push(`<path d="M ${cx-26} 46 C ${cx-26} 24 ${cx-16} 17 ${cx} 17 C ${cx+16} 17 ${cx+26} 24 ${cx+26} 46 C ${cx+26} 63 ${cx+14} 75 ${cx} 78 C ${cx-14} 75 ${cx-26} 63 ${cx-26} 46 Z" fill="${skin}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);
+  H.push(`<path d="M ${cx} 19 C ${cx+17} 22 ${cx+24} 36 ${cx+24} 47 C ${cx+24} 62 ${cx+13} 74 ${cx} 77 Z" fill="${skD}" opacity="0.35"/>`);
+  H.push(`<ellipse cx="${cx-9}" cy="40" rx="7" ry="10" fill="${skHi}" opacity="0.30"/>`);
+  // -- blush (gentil/feliz) --
+  if(expr==='gentil'||expr==='feliz'){H.push(`<ellipse cx="${cx-15}" cy="58" rx="4.5" ry="2.6" fill="rgba(255,120,120,0.28)"/><ellipse cx="${cx+15}" cy="58" rx="4.5" ry="2.6" fill="rgba(255,120,120,0.28)"/>`);}
+  // -- olhos anime --
+  const eyeY=52,edx=12;
+  const EH=expr==='serio'?6.4:expr==='determinado'?8.4:9.4;
+  const browCol=(R.brow)?'#2a1d14':hairD;
+  [-1,1].forEach(s=>{
+    const ex=cx+s*edx;
+    if(expr==='feliz'){
+      H.push(`<path d="M ${ex-6.5} ${eyeY+2} Q ${ex} ${eyeY-5} ${ex+6.5} ${eyeY+2}" fill="none" stroke="${OUT}" stroke-width="2.8" stroke-linecap="round"/>`);
+    }else{
+      // sclera
+      H.push(`<ellipse cx="${ex}" cy="${eyeY}" rx="7" ry="${EH}" fill="#fff"/>`);
+      // íris (anel + centro)
+      H.push(`<ellipse cx="${ex}" cy="${eyeY+0.8}" rx="5.6" ry="${EH-0.6}" fill="${eyeD}"/>`);
+      H.push(`<ellipse cx="${ex}" cy="${eyeY+1.6}" rx="4.3" ry="${EH-2.2}" fill="${eyeC}"/>`);
+      H.push(`<ellipse cx="${ex}" cy="${eyeY+2.6}" rx="3.1" ry="${EH-3.4}" fill="${eyeHi}" opacity="0.55"/>`);
+      // pupila
+      if(R.k==='besta'){H.push(`<rect x="${ex-1.1}" y="${eyeY-2}" width="2.2" height="${EH+1}" rx="1.1" fill="#120a10"/>`);}
+      else{H.push(`<ellipse cx="${ex}" cy="${eyeY+1.6}" rx="2.3" ry="${Math.max(2.4,EH-3.6)}" fill="#140f16"/>`);}
+      // brilhos
+      H.push(`<circle cx="${ex-2.2}" cy="${eyeY-2.4}" r="2.5" fill="#fff"/>`);
+      H.push(`<circle cx="${ex+2.4}" cy="${eyeY+3}" r="1.1" fill="#fff" opacity="0.85"/>`);
+      // cílio superior grosso + traço externo
+      H.push(`<path d="M ${ex-7.2} ${eyeY-1} Q ${ex} ${eyeY-EH-2.4} ${ex+7.2} ${eyeY-1}" fill="none" stroke="${OUT}" stroke-width="2.8" stroke-linecap="round"/>`);
+      H.push(`<path d="M ${ex+s*7} ${eyeY-1.5} l ${s*3.4} ${expr==='determinado'?-1:-2.6}" stroke="${OUT}" stroke-width="2.6" stroke-linecap="round"/>`);
+      H.push(`<path d="M ${ex-5} ${eyeY+EH-0.5} Q ${ex} ${eyeY+EH+1.4} ${ex+5} ${eyeY+EH-0.5}" fill="none" stroke="${skD}" stroke-width="1.1" opacity="0.55"/>`);
+    }
+    // sobrancelha por expressão
+    const bY=eyeY-EH-3.2, oX=ex+s*6.5, iX=ex-s*6.5;
+    if(expr==='determinado'){H.push(`<path d="M ${oX} ${bY-1.5} L ${iX} ${bY+2.5}" stroke="${browCol}" stroke-width="3.2" stroke-linecap="round"/>`);}
+    else if(expr==='serio'){H.push(`<path d="M ${oX} ${bY+1} L ${iX} ${bY+1}" stroke="${browCol}" stroke-width="3.2" stroke-linecap="round"/>`);}
+    else if(expr==='gentil'){H.push(`<path d="M ${oX} ${bY} Q ${ex} ${bY-2.6} ${iX} ${bY}" stroke="${browCol}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`);}
+    else{H.push(`<path d="M ${oX} ${bY-1} Q ${ex} ${bY-3.2} ${iX} ${bY-1}" stroke="${browCol}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`);}
   });
-  // sobrancelhas
-  if(RC.brow){RF(eLx-0.1,eyeY-0.7,ew+0.3,0.5,OUT);RF(eRx-0.2,eyeY-0.7,ew+0.3,0.5,OUT);}
-  else{RF(eLx,eyeY-0.55,ew,0.4,hairD,0.9);RF(eRx,eyeY-0.55,ew,0.4,hairD,0.9);}
-  // nariz
-  RF(cx-0.28,eyeY+eh+0.15,0.56,0.9,skD,0.75);
-  // boca
-  if(!RC.beard)RF(hx+hw*0.32,headTopY+headH*0.76,hw*0.36,0.42,'#8a4a3a',0.9);
-  // presas
-  if(RC.fang){RF(hx+hw*0.34,headTopY+headH*0.80,0.5,0.8,'#fff');RF(hx+hw*0.62,headTopY+headH*0.80,0.5,0.8,'#fff');}
-  // barba (anão)
-  if(RC.beard){RO(hx+0.2, headTopY+headH*0.55, hw-0.4, headH*0.75, hair);
-    RF(hx+hw*0.3,headTopY+headH*0.6,hw*0.4,0.6,'#8a4a3a',0.6); // boca no meio da barba
-    RF(hx+0.4,headTopY+headH*0.6,hw*0.3,headH*0.6,hairHi,0.25);}
-
-  // ---- CABELO da frente (se sem elmo/boné cobrindo) ----
-  const headCovered=eq.head&&['helm_steel','helm_horned','cap_black','cap_red'].includes(eq.head);
-  if(!headCovered&&style!=='careca'){
-    if(style==='moicano'){RO(cx-0.7, headTopY-2.2, 1.4, 3.0, hair);RF(cx-0.5,headTopY-2,0.5,2.6,hairHi,0.4);}
-    else if(style==='topete'){RO(hx+0.3, headTopY-1.8, hw-0.6, 2.6, hair);RO(hx+hw*0.28,headTopY-2.8,hw*0.5,1.6,hair);}
-    else { // curto / longo (frente)
-      RO(hx-0.2, headTopY-1.4, hw+0.4, 2.4, hair);
-      RF(hx+hw*0.05,headTopY-1.2,hw*0.4,1.8,hairHi,0.4);
-      // costeletas
-      RF(hx-0.2,headTopY+0.8,0.7,headH*0.4,hair);RF(hx+hw-0.5,headTopY+0.8,0.7,headH*0.4,hair);
+  // -- nariz + boca --
+  H.push(`<path d="M ${cx+1} 60 L ${cx-2} 64" fill="none" stroke="${skD}" stroke-width="1.4" stroke-linecap="round"/>`);
+  if(!R.beard){
+    if(expr==='feliz')H.push(`<path d="M ${cx-6} 68 Q ${cx} 74 ${cx+6} 68 Q ${cx} 71 ${cx-6} 68 Z" fill="#b5514a" stroke="${OUT}" stroke-width="1.2" stroke-linejoin="round"/>`);
+    else if(expr==='gentil')H.push(`<path d="M ${cx-5} 69 Q ${cx} 73 ${cx+5} 69" fill="none" stroke="#8a4a3a" stroke-width="2" stroke-linecap="round"/>`);
+    else H.push(`<path d="M ${cx-4} 70 L ${cx+4} 70" stroke="#8a4a3a" stroke-width="2" stroke-linecap="round"/>`);
+  }
+  if(R.fang){H.push(`<path d="M ${cx-5} 69 L ${cx-3.5} 74 L ${cx-2} 69 Z" fill="#fff" stroke="${OUT}" stroke-width="0.6"/><path d="M ${cx+5} 69 L ${cx+3.5} 74 L ${cx+2} 69 Z" fill="#fff" stroke="${OUT}" stroke-width="0.6"/>`);}
+  // -- barba (anão) --
+  if(R.beard){
+    H.push(`<path d="M ${cx-22} 48 Q ${cx-25} 76 ${cx} 84 Q ${cx+25} 76 ${cx+22} 48 Q ${cx} 64 ${cx-22} 48 Z" fill="${hair}" stroke="${OUT}" stroke-width="2" stroke-linejoin="round"/>`);
+    H.push(`<path d="M ${cx-13} 62 Q ${cx-7} 78 ${cx} 82 Q ${cx+7} 78 ${cx+13} 62" fill="none" stroke="${hairD}" stroke-width="1.4"/>`);
+  }
+  // -- franja/cabelo da frente por estilo --
+  if(showHair&&(!eq.head||eq.head==='bandana')){
+    const HL=`<path d="M ${cx-14} 22 Q ${cx-4} 16 ${cx+6} 20" stroke="${hairHi}" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.8"/>`;
+    if(style==='espetado'){
+      H.push(`<path d="M ${cx-27} 40 L ${cx-27} 22 L ${cx-19} 6 L ${cx-13} 22 L ${cx-7} 4 L ${cx-1} 22 L ${cx+5} 7 L ${cx+11} 23 L ${cx+17} 6 L ${cx+24} 24 L ${cx+27} 14 L ${cx+27} 40 L ${cx+17} 32 L ${cx+8} 37 L ${cx} 31 L ${cx-9} 37 L ${cx-18} 32 Z" fill="${hair}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);H.push(HL);
+    }else if(style==='franja'){
+      H.push(`<path d="M ${cx-27} 46 Q ${cx-29} 14 ${cx} 12 Q ${cx+29} 14 ${cx+27} 46 L ${cx+27} 34 L ${cx+9} 33 L ${cx} 36 L ${cx-9} 33 L ${cx-27} 34 Z" fill="${hair}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);
+      H.push(`<path d="M ${cx-27} 34 L ${cx-25} 62 L ${cx-19} 60 L ${cx-21} 34 Z" fill="${hair}" stroke="${OUT}" stroke-width="2" stroke-linejoin="round"/>`);
+      H.push(`<path d="M ${cx+27} 34 L ${cx+25} 62 L ${cx+19} 60 L ${cx+21} 34 Z" fill="${hair}" stroke="${OUT}" stroke-width="2" stroke-linejoin="round"/>`);H.push(HL);
+    }else if(style==='moicano'){
+      H.push(`<path d="M ${cx-7} 40 Q ${cx-8} 4 ${cx} 2 Q ${cx+8} 4 ${cx+7} 40 Q ${cx} 32 ${cx-7} 40 Z" fill="${hair}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);
+    }else if(style==='coque'){
+      H.push(`<circle cx="${cx}" cy="10" r="9" fill="${hair}" stroke="${OUT}" stroke-width="${ow}"/>`);
+      H.push(`<path d="M ${cx-26} 44 Q ${cx-28} 16 ${cx} 15 Q ${cx+28} 16 ${cx+26} 44 Q ${cx+17} 30 ${cx+7} 34 Q ${cx} 27 ${cx-7} 34 Q ${cx-17} 30 ${cx-26} 44 Z" fill="${hair}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);H.push(HL);
+    }else if(style==='ondulado'){
+      H.push(`<path d="M ${cx-27} 44 Q ${cx-30} 14 ${cx} 13 Q ${cx+30} 14 ${cx+27} 44 Q ${cx+20} 34 ${cx+14} 40 Q ${cx+8} 32 ${cx} 38 Q ${cx-8} 32 ${cx-14} 40 Q ${cx-20} 34 ${cx-27} 44 Z" fill="${hair}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);H.push(HL);
+    }else{ // curto / longo / rabo (franja padrão)
+      H.push(`<path d="M ${cx-26} 44 Q ${cx-28} 14 ${cx} 13 Q ${cx+28} 14 ${cx+26} 44 Q ${cx+18} 28 ${cx+8} 34 Q ${cx} 26 ${cx-8} 34 Q ${cx-18} 28 ${cx-26} 44 Z" fill="${hair}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);H.push(HL);
     }
   }
-  // chifres (besta) — por cima
-  if(RC.horns){
-    RO(hx-0.3, headTopY-2.2, 1.1, 2.6, '#e8dcc0');
-    RO(hx+hw-0.8, headTopY-2.2, 1.1, 2.6, '#e8dcc0');
-    RF(hx-0.1,headTopY-2,0.5,2,'#fff',0.4);RF(hx+hw-0.6,headTopY-2,0.5,2,'#fff',0.4);
+  // -- chifres (besta) --
+  if(R.horns){
+    H.push(`<path d="M ${cx-10} 24 Q ${cx-22} 13 ${cx-20} 1 Q ${cx-13} 12 ${cx-5} 22 Z" fill="#e8dcc0" stroke="${OUT}" stroke-width="2" stroke-linejoin="round"/>`);
+    H.push(`<path d="M ${cx+10} 24 Q ${cx+22} 13 ${cx+20} 1 Q ${cx+13} 12 ${cx+5} 22 Z" fill="#e8dcc0" stroke="${OUT}" stroke-width="2" stroke-linejoin="round"/>`);
   }
-  // ---- CABEÇA: bandana / boné / elmo ----
-  if(eq.head){const hc=itemById(eq.head).color,hcD=darken(hc,0.78),hcHi=darken(hc,1.2);
-    if(eq.head==='bandana'){RO(hx-0.2, headTopY-0.2, hw+0.4, 1.5, hc);RF(hx+hw-1.2,headTopY+1.2,0.9,1.8,hc);}
+  // -- cabeça: bandana / boné / elmo --
+  if(eq.head){const hc=itemById(eq.head).color,hcD=darken(hc,0.8);
+    if(eq.head==='bandana')H.push(`<path d="M ${cx-26} 34 Q ${cx} 26 ${cx+26} 34 L ${cx+26} 44 Q ${cx} 36 ${cx-26} 44 Z" fill="${hc}" stroke="${OUT}" stroke-width="${ow}"/>`);
     else if(eq.head==='helm_steel'||eq.head==='helm_horned'){
-      RO(hx-0.3, headTopY-1.6, hw+0.6, headH*0.62, hc);
-      RF(hx, headTopY-1.4, hw*0.4, headH*0.5, hcHi, 0.4);
-      RF(cx-0.35, headTopY+0.2, 0.7, headH*0.75, hcD); // protetor nasal
-      RF(hx-0.3,headTopY+headH*0.5,hw+0.6,0.5,hcD);
-      if(eq.head==='helm_horned'){RO(hx-1.0,headTopY-2.4,1.2,2.2,'#e8dcc0');RO(hx+hw-0.2,headTopY-2.4,1.2,2.2,'#e8dcc0');}
+      H.push(`<path d="M ${cx-26} 50 Q ${cx-28} 12 ${cx} 11 Q ${cx+28} 12 ${cx+26} 50 Q ${cx+22} 44 ${cx+18} 46 L ${cx-18} 46 Q ${cx-22} 44 ${cx-26} 50 Z" fill="${hc}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);
+      H.push(`<rect x="${cx-3.5}" y="30" width="7" height="24" rx="2" fill="${hcD}" stroke="${OUT}" stroke-width="1.5"/>`);
+      H.push(`<path d="M ${cx-26} 47 Q ${cx} 43 ${cx+26} 47" stroke="${hcD}" stroke-width="2.4" fill="none"/>`);
+      H.push(`<ellipse cx="${cx-9}" cy="28" rx="7" ry="4" fill="${darken(hc,1.15)}" opacity="0.5"/>`);
+      if(eq.head==='helm_horned'){H.push(`<path d="M ${cx-23} 28 Q ${cx-35} 20 ${cx-34} 6 Q ${cx-27} 18 ${cx-17} 26 Z" fill="#e8dcc0" stroke="${OUT}" stroke-width="2" stroke-linejoin="round"/>`);H.push(`<path d="M ${cx+23} 28 Q ${cx+35} 20 ${cx+34} 6 Q ${cx+27} 18 ${cx+17} 26 Z" fill="#e8dcc0" stroke="${OUT}" stroke-width="2" stroke-linejoin="round"/>`);}
     }
-    else{ // boné
-      RO(hx-0.3, headTopY-1.2, hw+0.6, 1.8, hc);
-      RO(hx+hw-1.4, headTopY+0.2, 2.4, 0.9, hc); // aba
-      RF(hx,headTopY-1,hw*0.4,1.2,hcHi,0.4);
-    }
-  }
-
-  /* ---------- ARMAS na mão direita ---------- */
-  if(eq.hands==='sword'){
-    const sxx=rArmX+armW*0.5;
-    RO(sxx-0.28, handY-4.6, 0.56, 5.4, '#cbd0d6');      // lâmina
-    RF(sxx-0.1, handY-4.6, 0.2, 5.0, '#eef2f5',0.7);
-    RO(sxx-0.9, handY+0.5, 1.8, 0.6, '#d9a441');         // guarda
-    RO(sxx-0.3, handY+1.0, 0.6, 1.4, '#6b3e16');         // cabo
-  }else if(eq.hands==='axe'){
-    const sxx=rArmX+armW*0.5;
-    RO(sxx-0.22, handY-4.4, 0.44, 6.0, '#6b3e16');       // cabo
-    RO(sxx-0.1, handY-4.6, 2.4, 2.4, itemById('axe').color); // cabeça
-    RF(sxx+0.1,handY-4.4,1.8,0.6,'#eef2f5',0.5);
-  }
-
-  return `<svg viewBox="0 0 200 352" shape-rendering="crispEdges">${P.join('')}</svg>`;
+    else{H.push(`<path d="M ${cx-27} 40 Q ${cx} 6 ${cx+27} 40 Z" fill="${hc}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);H.push(`<path d="M ${cx+2} 40 Q ${cx+34} 38 ${cx+38} 44 Q ${cx+10} 44 ${cx+2} 42 Z" fill="${hc}" stroke="${OUT}" stroke-width="${ow}" stroke-linejoin="round"/>`);}}
+  P.push(`<g transform="translate(${cx} 47) scale(${R.headR*1.22}) translate(${-cx} -47)">${H.join('')}</g>`);
+  // munhequeira / luva
+  if(eq.wrists){const wc=itemById(eq.wrists).color;P.push(`<rect x="${lHand-armW/2}" y="${handY-7}" width="${armW}" height="7" rx="2" fill="${wc}" stroke="${OUT}" stroke-width="1.4"/>`);P.push(`<rect x="${rHand-armW/2}" y="${handY-7}" width="${armW}" height="7" rx="2" fill="${wc}" stroke="${OUT}" stroke-width="1.4"/>`);}
+  if(eq.hands){const hc=itemById(eq.hands).color;
+    if(eq.hands==='sword'){
+      P.push(`<line x1="${rHand}" y1="${handY+8}" x2="${rHand}" y2="${handY-46}" stroke="${hc}" stroke-width="4" stroke-linecap="round"/>`);
+      P.push(`<line x1="${rHand}" y1="${handY-46}" x2="${rHand}" y2="${handY-54}" stroke="#e8eef2" stroke-width="2.4" stroke-linecap="round"/>`);
+      P.push(`<rect x="${rHand-8}" y="${handY+6}" width="16" height="4" rx="2" fill="#d9a441" stroke="${OUT}" stroke-width="1"/>`);
+      P.push(`<rect x="${rHand-2.5}" y="${handY+10}" width="5" height="9" rx="2" fill="#6b3e16"/>`);
+    }else if(eq.hands==='axe'){
+      const topY=handY-46;
+      P.push(`<line x1="${rHand}" y1="${handY+12}" x2="${rHand}" y2="${topY+4}" stroke="#6b3e16" stroke-width="4.5" stroke-linecap="round"/>`);
+      P.push(`<path d="M ${rHand-1} ${topY} Q ${rHand+26} ${topY+3} ${rHand+20} ${topY+24} Q ${rHand+8} ${topY+17} ${rHand-1} ${topY+19} Z" fill="${hc}" stroke="${OUT}" stroke-width="1.8" stroke-linejoin="round"/>`);
+      P.push(`<path d="M ${rHand-1} ${topY+2} Q ${rHand+14} ${topY+4} ${rHand+16} ${topY+12}" stroke="#e8eef2" stroke-width="1.6" fill="none" opacity="0.6"/>`);
+    }else{P.push(`<circle cx="${lHand}" cy="${handY+2}" r="${armW/2-1}" fill="${hc}" stroke="${OUT}" stroke-width="1.4"/>`);P.push(`<circle cx="${rHand}" cy="${handY+2}" r="${armW/2-1}" fill="${hc}" stroke="${OUT}" stroke-width="1.4"/>`);}}
+  return `<svg viewBox="0 0 200 352">${P.join('')}</svg>`;
 }
 
 let shopSlot='head';
@@ -410,7 +418,11 @@ export function openCharacterForm(idx){
     <div class="field"><label>Cor do cabelo</label>
       <div class="skin-pick" style="flex-wrap:wrap">${HAIRS.map((c,i)=>`<button type="button" class="hr ${((ch.hair!=null?ch.hair:0)===i)?'on':''}" data-i="${i}" style="background:${c}" onclick="document.querySelectorAll('.hr').forEach(b=>b.classList.remove('on'));this.classList.add('on')"></button>`).join('')}</div></div>
     <div class="field"><label>Estilo de cabelo</label>
-      ${chipRow('chair',HAIRSTYLES,ch.hairStyle||'curto','k','l')}</div>
+      ${chipRow('chair',HAIRSTYLES,ch.hairStyle||'espetado','k','l')}</div>
+    <div class="field"><label>Cor dos olhos</label>
+      <div class="skin-pick" style="flex-wrap:wrap">${EYECOLORS.map((c,i)=>`<button type="button" class="ey ${((ch.eyeColor!=null?ch.eyeColor:1)===i)?'on':''}" data-i="${i}" style="background:${c}" onclick="document.querySelectorAll('.ey').forEach(b=>b.classList.remove('on'));this.classList.add('on')"></button>`).join('')}</div></div>
+    <div class="field"><label>Expressão</label>
+      ${chipRow('chexpr',EYESTYLES,ch.eyeStyle||'determinado','k','l')}</div>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
     <button class="btn btn-acc" onclick="saveCharacter(${editing?idx:-1})">${editing?'Salvar':'Criar Bro'}</button></div>`);
 }
@@ -422,7 +434,9 @@ export function saveCharacter(idx){
   ch.race=chipVal('chrace')||'humano';
   const sk=document.querySelector('.sk.on');ch.skin=sk?+sk.getAttribute('data-i'):1;
   const hr=document.querySelector('.hr.on');ch.hair=hr?+hr.getAttribute('data-i'):0;
-  ch.hairStyle=chipVal('chair')||'curto';
+  ch.hairStyle=chipVal('chair')||'espetado';
+  const ey=document.querySelector('.ey.on');ch.eyeColor=ey?+ey.getAttribute('data-i'):1;
+  ch.eyeStyle=chipVal('chexpr')||'determinado';
   if(!editing){S.characters.push(ch);S.activeChar=S.characters.length-1;}
   save();renderPersonagem();closeModal();toast(editing?'Personagem salvo ✅':'Bora treinar, '+ch.name+'! 🦾');
 }
